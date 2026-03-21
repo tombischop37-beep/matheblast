@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MatheBlast – Zahlung erfolgreich</title>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323:wght@400&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    background:#0a0a1a;
+    color:#fff;
+    font-family:'Press Start 2P',monospace;
+    min-height:100vh;
+    display:flex;align-items:center;justify-content:center;
+    padding:20px;
+  }
+  .card{
+    background:rgba(0,255,0,0.05);
+    border:2px solid #00ff88;
+    border-radius:12px;
+    padding:40px 30px;
+    max-width:460px;
+    width:100%;
+    text-align:center;
+    box-shadow:0 0 40px rgba(0,255,136,0.2);
+  }
+  .emoji{font-size:64px;display:block;margin-bottom:20px}
+  h1{font-size:clamp(12px,3.5vw,18px);color:#00ff88;margin-bottom:12px;line-height:1.6}
+  .sub{font-family:'VT323',monospace;font-size:20px;color:rgba(255,255,255,0.5);margin-bottom:32px}
+  .code-label{font-size:7px;color:rgba(255,255,255,0.4);letter-spacing:2px;margin-bottom:10px}
+  .code-box{
+    background:#000;
+    border:2px solid #ffe600;
+    border-radius:8px;
+    padding:20px;
+    font-family:'VT323',monospace;
+    font-size:clamp(22px,6vw,32px);
+    color:#ffe600;
+    letter-spacing:4px;
+    text-shadow:0 0 15px #ffe600;
+    margin-bottom:12px;
+    word-break:break-all;
+  }
+  .hint{font-size:6px;color:rgba(255,255,255,0.3);line-height:2;margin-bottom:28px}
+  .btn{
+    display:inline-block;
+    background:#00ff88;
+    color:#000;
+    font-family:'Press Start 2P',monospace;
+    font-size:9px;
+    padding:14px 24px;
+    border-radius:6px;
+    text-decoration:none;
+    cursor:pointer;
+    border:none;
+    letter-spacing:1px;
+  }
+  .loading{font-family:'VT323',monospace;font-size:22px;color:rgba(255,255,255,0.4);animation:blink 1s infinite}
+  @keyframes blink{0%,100%{opacity:1}50%{opacity:0.2}}
+  .error{color:#ff4466;font-family:'VT323',monospace;font-size:18px;margin-top:16px}
+</style>
+</head>
+<body>
+<div class="card">
+  <span class="emoji">🎉</span>
+  <h1>ZAHLUNG ERFOLGREICH!</h1>
+  <p class="sub">Klasse 4 wird freigeschaltet</p>
+
+  <div class="code-label">DEIN FREISCHALT-CODE</div>
+  <div class="code-box" id="codeBox"><span class="loading">LADEN...</span></div>
+  <p class="hint">
+    Diesen Code im Spiel eingeben<br>
+    unter "Klasse 4 → Code eingeben".<br>
+    Screenshot machen zum Aufbewahren!
+  </p>
+
+  <a href="/" class="btn">↩ ZURÜCK ZUM SPIEL</a>
+  <div class="error" id="errMsg"></div>
+</div>
+
+<script>
+(async () => {
+  const params = new URLSearchParams(window.location.search);
+  const sessionId = params.get('session_id');
+
+  if (!sessionId) {
+    document.getElementById('codeBox').innerHTML = '–';
+    document.getElementById('errMsg').textContent = 'Keine Session gefunden.';
+    return;
+  }
+
+  try {
+    const res = await fetch(`/.netlify/functions/get-code?session_id=${sessionId}`);
+    const data = await res.json();
+
+    if (data.code) {
+      document.getElementById('codeBox').textContent = data.code;
+    } else {
+      document.getElementById('codeBox').innerHTML = '–';
+      document.getElementById('errMsg').textContent = data.error || 'Fehler beim Laden des Codes.';
+    }
+  } catch(e) {
+    document.getElementById('codeBox').innerHTML = '–';
+    document.getElementById('errMsg').textContent = 'Verbindungsfehler. Bitte Seite neu laden.';
+  }
+})();
+</script>
+</body>
+</html>
