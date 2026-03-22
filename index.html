@@ -206,16 +206,16 @@ body::after{
 }
 .game-hdr-title{font-size:7px;letter-spacing:2px}
 .btn-quit{
-  background:transparent;border:1px solid var(--yellow);
-  color:var(--yellow);font-family:'Press Start 2P',monospace;
+  background:transparent;border:2px solid #FFFF00;
+  color:#FFFF00;font-family:'Press Start 2P',monospace;
   font-size:7px;padding:5px 8px;cursor:pointer;transition:all .2s;letter-spacing:1px;
 }
-.btn-quit:hover{border-color:var(--red);color:var(--red);border-color:var(--yellow);color:var(--red)}
+.btn-quit:hover{border-color:#FF4444;color:#FF4444}
 
 /* HUD row */
 .hud-row{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
 .hud-box{
-  background:var(--soft);border:1px solid var(--yellow);
+  background:var(--soft);border:1px solid var(--border);
   padding:7px 4px;text-align:center;
 }
 .hud-lbl{font-size:5px;color:rgba(255,255,255,0.35);letter-spacing:1px;margin-bottom:3px}
@@ -225,7 +225,7 @@ body::after{
 .timer-wrap{position:relative}
 .timer-track{
   height:10px;background:var(--soft);
-  border:1px solid var(--yellow);overflow:hidden;
+  border:1px solid var(--border);overflow:hidden;
 }
 .timer-fill{
   height:100%;width:100%;
@@ -329,13 +329,13 @@ body::after{
 
 /* Progress */
 .prog-row{display:flex;align-items:center;gap:8px}
-.prog-track{flex:1;height:5px;background:var(--soft);border:1px solid var(--yellow);overflow:hidden}
+.prog-track{flex:1;height:5px;background:var(--soft);border:1px solid var(--border);overflow:hidden}
 .prog-fill{
   height:100%;background:linear-gradient(90deg,var(--pink),var(--purple));
   transition:width .4s ease;
   box-shadow:0 0 8px var(--pink);
 }
-.prog-lbl{font-size:6px;color:var(--yellow);white-space:nowrap}
+.prog-lbl{font-size:6px;color:rgba(255,255,255,0.3);white-space:nowrap}
 
 /* ══════════════════════════════════════
    SCREEN: HIGHSCORE
@@ -345,8 +345,8 @@ body::after{
 .hs-filter{display:flex;gap:6px;justify-content:center;flex-wrap:wrap}
 .hs-filter-btn{
   padding:6px 10px;background:transparent;
-  border:1px solid var(--yellow);
-  color:var(--yellow);
+  border:1px solid var(--border);
+  color:rgba(255,255,255,0.3);
   font-family:'Press Start 2P',monospace;font-size:6px;
   cursor:pointer;transition:all .2s;letter-spacing:1px;
 }
@@ -366,7 +366,7 @@ body::after{
 .hs-row.bronze .hs-rank{color:#CD7F32;text-shadow:0 0 8px #CD7F32}
 .hs-rank{font-size:9px;text-align:center}
 .hs-name{font-family:'VT323',monospace;font-size:20px;color:var(--cyan);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.hs-meta{font-family:'VT323',monospace;font-size:14px;color:var(--yellow);text-align:right;line-height:1.3}
+.hs-meta{font-family:'VT323',monospace;font-size:14px;color:rgba(255,255,255,0.3);text-align:right;line-height:1.3}
 .hs-score-val{font-family:'VT323',monospace;font-size:22px;color:var(--yellow);text-align:right}
 .btn-back{
   padding:14px;background:transparent;
@@ -400,10 +400,10 @@ body::after{
   gap:6px;text-align:center;
 }
 .result-box{
-  background:var(--soft);border:1px solid var(--yellow);
+  background:var(--soft);border:1px solid var(--border);
   padding:10px 6px;
 }
-.result-lbl{font-size:6px;color:var(--yellow);letter-spacing:1px;margin-bottom:4px}
+.result-lbl{font-size:6px;color:rgba(255,255,255,0.3);letter-spacing:1px;margin-bottom:4px}
 .result-val{font-family:'VT323',monospace;font-size:clamp(22px,6vw,30px)}
 
 .end-btns{display:flex;flex-direction:column;gap:8px}
