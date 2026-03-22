@@ -206,11 +206,15 @@ body::after{
 }
 .game-hdr-title{font-size:7px;letter-spacing:2px}
 .btn-quit{
-  background:transparent;border:2px solid #FFFF00;
-  color:#FFFF00;font-family:'Press Start 2P',monospace;
-  font-size:7px;padding:5px 8px;cursor:pointer;transition:all .2s;letter-spacing:1px;
+  -webkit-appearance:none;-moz-appearance:none;appearance:none;
+  background:#000820 !important;border:2px solid #FFFF00 !important;
+  color:#FFFF00 !important;font-family:'Press Start 2P',monospace;
+  font-size:7px;padding:5px 8px;cursor:pointer;transition:all .2s;
+  letter-spacing:1px;border-radius:0;outline:none;
+  -webkit-tap-highlight-color:transparent;
+  -webkit-text-fill-color:#FFFF00 !important;
 }
-.btn-quit:hover{border-color:#FF4444;color:#FF4444}
+.btn-quit:hover{border-color:#FF4444 !important;color:#FF4444 !important;background:#000820 !important;}
 
 /* HUD row */
 .hud-row{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
