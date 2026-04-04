@@ -654,14 +654,15 @@ body::after{
 /* ── ENDBOSS BUTTON ── */
 .btn-boss{
   width:100%;padding:11px;margin:4px 0;
-  background:transparent;
+  background:transparent !important;
   border:2px solid #FF4400;color:#FF4400;
   font-family:'Press Start 2P',monospace;font-size:clamp(7px,2vw,9px);
   cursor:pointer;transition:all .2s;letter-spacing:2px;
-  position:relative;overflow:hidden;
+  -webkit-appearance:none;appearance:none;
+  box-sizing:border-box;
 }
 .btn-boss:hover{border-color:#FF6600;color:#FF6600;box-shadow:0 0 15px rgba(255,68,0,0.3);}
-.btn-boss.locked-boss{opacity:0.4;cursor:not-allowed;border-color:#553300;color:#553300;}
+.btn-boss.locked-boss{opacity:0.5;cursor:not-allowed;border-color:#FF4400;color:#FF4400;background:transparent !important;}
 .btn-boss .boss-lock-info{font-size:7px;opacity:0.7;display:block;margin-top:4px;}
 /* ENDBOSS SCREEN */
 #bossScreen{background:#000820;}
