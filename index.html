@@ -648,19 +648,19 @@ body::after{
 .ship-btn canvas{display:block;}
 .ship-btn .ship-lock{position:absolute;top:2px;right:3px;font-size:8px;}
 .ship-btn .ship-name{font-family:'Press Start 2P',monospace;font-size:5px;color:rgba(255,255,255,0.6);margin-top:1px;}
-.ship-req{font-family:'Press Start 2P',monospace;font-size:7px;color:rgba(255,255,255,0.4);text-align:center;min-height:14px;margin-bottom:2px;}
+.ship-req{font-family:'Press Start 2P',monospace;font-size:7px;color:rgba(255,255,255,0.4);text-align:center;min-height:12px;margin-bottom:4px;}
 
 
 /* ── ENDBOSS BUTTON ── */
 .btn-boss{
-  width:100%;max-width:340px;padding:12px;margin:4px 0;
-  background:linear-gradient(90deg,#1a0000,#2d0000);
+  width:100%;padding:11px;margin:4px 0;
+  background:transparent;
   border:2px solid #FF4400;color:#FF4400;
-  font-family:'Press Start 2P',monospace;font-size:11px;
-  cursor:pointer;transition:all .2s;letter-spacing:1px;
+  font-family:'Press Start 2P',monospace;font-size:clamp(7px,2vw,9px);
+  cursor:pointer;transition:all .2s;letter-spacing:2px;
   position:relative;overflow:hidden;
 }
-.btn-boss:hover{background:linear-gradient(90deg,#2d0000,#4d0000);box-shadow:0 0 20px rgba(255,68,0,0.5);}
+.btn-boss:hover{border-color:#FF6600;color:#FF6600;box-shadow:0 0 15px rgba(255,68,0,0.3);}
 .btn-boss.locked-boss{opacity:0.4;cursor:not-allowed;border-color:#553300;color:#553300;}
 .btn-boss .boss-lock-info{font-size:7px;opacity:0.7;display:block;margin-top:4px;}
 /* ENDBOSS SCREEN */
@@ -1331,7 +1331,7 @@ const Battle = (() => {
 /* ══════════════════════════════════════
    GAME STATE
 ══════════════════════════════════════ */
-const TOTAL=20;
+const TOTAL=15;
 const DIFF_TIME={easy:15,medium:12,hard:10};
 const DIFF_BONUS={easy:3,medium:5,hard:8};
 
@@ -1394,11 +1394,11 @@ const UNLOCK_KEY='matheblast_k4_unlocked';
 // SCHIFF-SYSTEM
 // ══════════════════════════════════════
 const SHIPS = [
-  { id:0, name:'RANGER',   color:'#00FFFF', glow:'#00AAFF', desc:'Starter-Schiff',           req:null },
-  { id:1, name:'BLITZ',    color:'#FFFF00', glow:'#FFAA00', desc:'500 Pkt + 1 Perfekt',      req:{pts:500,  perfect:1} },
-  { id:2, name:'INFERNO',  color:'#FF4400', glow:'#FF0000', desc:'1500 Pkt + 2 Perfekt',     req:{pts:1500, perfect:2} },
-  { id:3, name:'PHANTOM',  color:'#AA00FF', glow:'#7700CC', desc:'3000 Pkt + 3 Perfekt',     req:{pts:3000, perfect:3} },
-  { id:4, name:'LEGEND',   color:'#FFD700', glow:'#FFA500', desc:'Endboss besiegen',          req:{boss:true} },
+  { id:0, name:'RANGER',  color:'#00FFFF', glow:'#00AAFF', desc:'Starter-Schiff',            req:null },
+  { id:1, name:'BLITZ',   color:'#FFFF00', glow:'#FFAA00', desc:'3x perfekte Runde',         req:{perfect:3, klasse:0} },
+  { id:2, name:'INFERNO', color:'#FF4400', glow:'#FF0000', desc:'3x perfekt in Klasse 3',    req:{perfect:3, klasse:3} },
+  { id:3, name:'PHANTOM', color:'#AA00FF', glow:'#7700CC', desc:'1x perfekt Kl.4 Mittel/Schwer', req:{perfect:1, klasse:4, minDiff:'medium'} },
+  { id:4, name:'LEGEND',  color:'#FFD700', glow:'#FFA500', desc:'Endboss besiegen',           req:{boss:true} },
 ];
 
 const SHIP_KEY      = 'mb_ship_sel';
@@ -1425,20 +1425,46 @@ function getSelectedShip(){
 }
 
 function checkShipUnlocks(){
-  const s = getShipState();
-  const pts = getTotalScore();
-  const perf = getPerfectCount();
-  const bossWon = getBossWin();
-  let changed = false;
-  SHIPS.forEach(ship => {
+  var s=getShipState();
+  var bossWon=getBossWin();
+  var changed=false;
+  // Perfect counters per class/diff stored separately
+  var pc=getPerfectCounts();
+  SHIPS.forEach(function(ship){
     if(s.unlocked.includes(ship.id)) return;
-    const r = ship.req;
+    var r=ship.req;
     if(!r) return;
-    if(r.boss && bossWon){ s.unlocked.push(ship.id); changed=true; }
-    if(r.pts && r.perfect && pts>=r.pts && perf>=r.perfect){ s.unlocked.push(ship.id); changed=true; }
+    if(r.boss && bossWon){ s.unlocked.push(ship.id); changed=true; return; }
+    if(r.klasse===0 && r.perfect){
+      // Any class, any diff
+      var total=pc.total||0;
+      if(total>=r.perfect){ s.unlocked.push(ship.id); changed=true; }
+    } else if(r.klasse===3 && r.perfect){
+      var k3=pc.k3||0;
+      if(k3>=r.perfect){ s.unlocked.push(ship.id); changed=true; }
+    } else if(r.klasse===4 && r.perfect && r.minDiff){
+      var k4hard=(pc.k4medium||0)+(pc.k4hard||0);
+      if(k4hard>=r.perfect){ s.unlocked.push(ship.id); changed=true; }
+    }
   });
   if(changed) saveShipState(s);
   return changed;
+}
+
+// Perfect counters: track per class and difficulty
+var PERFECT_COUNTS_KEY='mb_perfect_counts';
+function getPerfectCounts(){
+  try{ return JSON.parse(localStorage.getItem(PERFECT_COUNTS_KEY)||'{}'); }catch(e){ return {}; }
+}
+function savePerfectCount(klasse, diff){
+  var pc=getPerfectCounts();
+  pc.total=(pc.total||0)+1;
+  if(klasse===3) pc.k3=(pc.k3||0)+1;
+  if(klasse===4 && diff==='medium') pc.k4medium=(pc.k4medium||0)+1;
+  if(klasse===4 && diff==='hard') pc.k4hard=(pc.k4hard||0)+1;
+  try{ localStorage.setItem(PERFECT_COUNTS_KEY, JSON.stringify(pc)); }catch(e){}
+  // Also update legacy perfect count for boss unlock
+  try{ localStorage.setItem(PERFECT_KEY, pc.total); }catch(e){}
 }
 
 
@@ -1788,10 +1814,13 @@ function answer(idx){
     state.correct++;
     state.streak++;
     if(state.streak>state.bestStreak) state.bestStreak=state.streak;
-    const tBonus=state.timerSecs*DIFF_BONUS[state.diff];
-    const sBonus=state.streak>1?Math.min(state.streak*10,100):0;
-    const serieBonus=state.streak===10?250:0;
-    const pts=100+tBonus+sBonus+serieBonus;
+    const classM=state.klasse===2?1:state.klasse===3?2:3;
+    const diffM=state.diff==='easy'?1:state.diff==='medium'?1.5:2;
+    const base=Math.round(10*classM*diffM);
+    const tBonus=Math.round(state.timerSecs*DIFF_BONUS[state.diff]*classM*0.3);
+    const sBonus=state.streak>1?Math.min(state.streak*5,50):0;
+    const serieBonus=state.streak===10?100:0;
+    const pts=base+tBonus+sBonus+serieBonus;
     state.score+=pts;
     btns[idx].classList.add('correct');
     Battle.hit();
@@ -1860,7 +1889,7 @@ function showStreak10(){
 ══════════════════════════════════════ */
 function endGame(){
   clearInterval(state.timerInt);state.active=false;
-  if(state.correct===TOTAL){ state.score+=500; addPerfect(); }
+  if(state.correct===TOTAL){ var perfBonus=state.klasse===2?100:state.klasse===3?250:500; state.score+=perfBonus; savePerfectCount(state.klasse, state.diff); }
   addTotalScore(state.score);
   checkShipUnlocks();
   Battle.finish(state.correct);
@@ -2029,7 +2058,7 @@ function renderShipSelector(){
     }
     btn.onclick=function(){
       if(!unlocked){
-        if(req) req.textContent=ship.req&&ship.req.boss?'ENDBOSS BESIEGEN!':ship.req.pts+'PK+'+ship.req.perfect+'x PERFEKT';
+        showShipReq(ship);
         return;
       }
       var s2=getShipState(); s2.selected=ship.id; saveShipState(s2);
@@ -2050,7 +2079,7 @@ var BOSS_TIMER_FAST   = 10;
 
 var bossState = {round:0,score:0,hp:10,maxHP:10,correct:0,timerInt:null,timerSecs:15,active:false};
 
-function isBossUnlocked(){ return getPerfectCount()>=3||getBossWin(); }
+function isBossUnlocked(){ var s=getShipState(); return s.unlocked.includes(2)||getBossWin(); }
 
 function updateBossButton(){
   var btn=document.getElementById('bossBtn');
@@ -2062,7 +2091,7 @@ function updateBossButton(){
   } else {
     btn.classList.add('locked-boss');
     var need=3-getPerfectCount();
-    if(info) info.textContent='🔒 NOCH '+need+'x PERFEKTE RUNDE NÖTIG';
+    if(info) info.textContent='🔒 ZUERST INFERNO-SCHIFF FREISPIELEN';
   }
 }
 
