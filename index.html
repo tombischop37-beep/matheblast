@@ -6,9 +6,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="MatheBlast">
-<meta name="theme-color" content="#000820">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0A0015">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-192.svg">
 <title>MATHE BLAST</title>
@@ -208,15 +206,11 @@ body::after{
 }
 .game-hdr-title{font-size:7px;letter-spacing:2px}
 .btn-quit{
-  -webkit-appearance:none;-moz-appearance:none;appearance:none;
-  background:#000820 !important;border:2px solid #FFFF00 !important;
-  color:#FFFF00 !important;font-family:'Press Start 2P',monospace;
-  font-size:7px;padding:5px 8px;cursor:pointer;transition:all .2s;
-  letter-spacing:1px;border-radius:0;outline:none;
-  -webkit-tap-highlight-color:transparent;
-  -webkit-text-fill-color:#FFFF00 !important;
+  background:transparent;border:1px solid var(--border);
+  color:rgba(255,255,255,0.3);font-family:'Press Start 2P',monospace;
+  font-size:7px;padding:5px 8px;cursor:pointer;transition:all .2s;letter-spacing:1px;
 }
-.btn-quit:hover{border-color:#FF4444 !important;color:#FF4444 !important;background:#000820 !important;}
+.btn-quit:hover{border-color:var(--red);color:var(--red)}
 
 /* HUD row */
 .hud-row{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
@@ -605,6 +599,40 @@ body::after{
   background:#000820;
 }
 #summaryCanvas{width:100%;height:100%;display:block;image-rendering:pixelated;}
+
+/* ── FREISCHALT-CODE MODAL ── */
+#codeModal{
+  display:none;position:fixed;top:0;left:0;width:100%;height:100%;
+  background:rgba(0,0,0,0.85);z-index:9999;
+  align-items:center;justify-content:center;
+}
+#codeModal.show{display:flex;}
+#codeModalBox{
+  background:#000820;border:2px solid #00FFFF;
+  padding:30px 20px;max-width:360px;width:90%;text-align:center;
+  font-family:'Press Start 2P',monospace;
+  box-shadow:0 0 30px rgba(0,255,255,0.3);
+}
+#codeModalBox h2{color:#00FF66;font-size:13px;margin:0 0 16px;line-height:1.6;}
+#codeModalBox .code-display{
+  background:#050010;border:2px solid #FFD700;
+  padding:14px;margin:16px 0;
+  font-size:18px;color:#FFD700;letter-spacing:2px;
+  cursor:pointer;user-select:all;
+}
+#codeModalBox .code-display:active{background:#0A1020;}
+#codeModalBox p{color:rgba(255,255,255,0.7);font-size:8px;line-height:1.8;margin:10px 0;}
+#codeModalBox .btn-copy{
+  background:#00FFFF;color:#000820;border:none;
+  font-family:'Press Start 2P',monospace;font-size:9px;
+  padding:10px 20px;cursor:pointer;margin:6px 4px;
+}
+#codeModalBox .btn-ok{
+  background:transparent;color:#00FF66;border:2px solid #00FF66;
+  font-family:'Press Start 2P',monospace;font-size:9px;
+  padding:10px 20px;cursor:pointer;margin:6px 4px;
+}
+
 </style>
 </head>
 <body>
@@ -1275,7 +1303,7 @@ async function sha256hex(str){
 // Erstelle unter dashboard.stripe.com → Payment Links
 // Redirect nach Zahlung: https://DEINE-URL/?payment=success
 // ══════════════════════════════════════
-const STRIPE_PAYMENT_LINK = 'https://buy.stripe.com/HIER_EINTRAGEN';
+const STRIPE_PAYMENT_LINK = 'https://buy.stripe.com/3cI5kD8yrdVMa6r9TF8so00';
 const UNLOCK_KEY='matheblast_k4_unlocked';
 
 function isUnlocked(){
@@ -1784,20 +1812,53 @@ if('serviceWorker' in navigator){
 (function checkPaymentReturn(){
   const params = new URLSearchParams(window.location.search);
   if(params.get('payment') === 'success'){
-    // Zahlung erfolgreich! Kurz warten dann freischalten
     setTimeout(()=>{
       unlock();
-      // URL säubern ohne Reload
       window.history.replaceState({}, '', window.location.pathname);
-      // Erfolgsmeldung zeigen
-      showToast();
       show('homeScreen');
-    }, 500);
+      // Code modal anzeigen
+      showCodeModal();
+    }, 600);
   }
 })();
 
 // Init unlock state on load
 updateClass4UI();
 </script>
+
+<!-- FREISCHALT-CODE MODAL -->
+<div id="codeModal">
+  <div id="codeModalBox">
+    <h2>✓ ZAHLUNG ERFOLGREICH!<br>KLASSE 4 FREIGESCHALTET!</h2>
+    <p>DEIN PERSOENLICHER FREISCHALT-CODE:</p>
+    <div class="code-display" id="modalCode" onclick="copyCode()">MATH-XXXX-XXXX</div>
+    <button class="btn-copy" onclick="copyCode()">📋 KOPIEREN</button>
+
+    <!-- Schritt 1: Hinweis -->
+    <div id="codeStep1">
+      <p style="color:#FF4444;font-size:9px;line-height:2;margin:14px 0;">
+        ⚠ WICHTIG!<br>
+        MACHE JETZT EIN BILDSCHIRMFOTO<br>
+        ODER NOTIERE DEN CODE!<br>
+        <span style="color:rgba(255,255,255,0.5);font-size:7px;">
+        BEI NEUEM GERAET ODER NACH<br>
+        CACHE-LOESCHEN BENOETIGST DU IHN.
+        </span>
+      </p>
+      <button class="btn-ok" onclick="confirmCode()">📸 CODE GESICHERT!</button>
+    </div>
+
+    <!-- Schritt 2: Bestätigung -->
+    <div id="codeStep2" style="display:none;">
+      <p style="color:#00FF66;font-size:9px;line-height:2;margin:14px 0;">
+        ✓ SUPER!<br>
+        DU KANNST DEN CODE JEDERZEIT<br>
+        UNTER "4. KLASSE" EINGEBEN.
+      </p>
+      <button class="btn-ok" onclick="closeCodeModal()">▶ JETZT SPIELEN!</button>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
