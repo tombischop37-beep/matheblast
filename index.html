@@ -351,7 +351,7 @@ body::after{
   cursor:pointer;transition:all .2s;letter-spacing:1px;
 }
 .hs-filter-btn.active{border-color:var(--cyan);color:var(--cyan);box-shadow:0 0 10px rgba(0,255,255,0.2)}
-.hs-list{flex:1;overflow-y:auto}
+.hs-list{flex:1;overflow-y:auto;max-height:calc(100vh - 160px);-webkit-overflow-scrolling:touch;}
 .hs-empty{text-align:center;padding:40px;font-family:'VT323',monospace;font-size:20px;color:rgba(255,255,255,0.2)}
 .hs-row{
   display:grid;grid-template-columns:28px 1fr auto auto;
@@ -665,19 +665,21 @@ body::after{
 .btn-boss.locked-boss{opacity:0.8;cursor:not-allowed;border-color:#FF4400;color:#FF4400;background:transparent !important;}
 .btn-boss .boss-lock-info{font-size:7px;opacity:0.7;display:block;margin-top:4px;}
 /* ENDBOSS SCREEN */
-#bossScreen{background:#000820;}
+#bossScreen{background:#000820 !important;padding:0 !important;}
 .boss-hud{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;border-bottom:1px solid #FF4400;}
-.boss-eq{font-family:'Press Start 2P',monospace;font-size:28px;color:#FFD700;text-align:center;
-  text-shadow:0 0 20px #FFD700;padding:20px 0 10px;}
-.boss-answers{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;padding:10px;}
+.boss-eq{font-family:'Press Start 2P',monospace;font-size:clamp(20px,5vw,32px);color:#FFD700;text-align:center;
+  text-shadow:0 0 20px #FFD700;padding:16px 0 8px;}
+.boss-answers{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;padding:10px 12px;}
 .boss-ans-btn{
-  width:110px;height:80px;font-family:'Press Start 2P',monospace;font-size:22px;
-  background:#050010;border:2px solid #FF00AA;color:#FF00AA;
+  width:clamp(80px,25vw,120px);height:70px;
+  font-family:'Press Start 2P',monospace;font-size:clamp(16px,4vw,24px);
+  background:#050010 !important;border:2px solid #FF00AA;color:#FF00AA;
   cursor:pointer;transition:all .15s;
+  -webkit-appearance:none;appearance:none;
 }
 .boss-ans-btn:hover{transform:scale(1.05);box-shadow:0 0 15px rgba(255,0,170,0.4);}
-.boss-ans-btn.shot{border-color:#FF4400;color:#FF4400;background:#1a0000;}
-.boss-ans-btn.correct-ans{border-color:#00FF66;color:#00FF66;}
+.boss-ans-btn.shot{border-color:#FF4400 !important;color:#FF4400 !important;background:#1a0000 !important;}
+.boss-ans-btn.correct-ans{border-color:#00FF66 !important;color:#00FF66 !important;}
 .boss-timer-bar{height:6px;background:#FF4400;transition:width .1s linear;margin:0 12px;}
 .boss-progress{font-family:'Press Start 2P',monospace;font-size:8px;color:rgba(255,255,255,0.5);text-align:center;padding:4px;}
 
@@ -705,8 +707,8 @@ body::after{
     <span class="class-label">▶ KLASSE WÄHLEN</span>
     <div class="class-btns">
       <button class="class-btn sel" data-class="2" onclick="selClass(this)">2. KLASSE<br><small style="font-size:6px;opacity:.5">+ −</small></button>
-      <button class="class-btn" data-class="3" onclick="selClass(this)">3. KLASSE<br><small style="font-size:6px;opacity:.5">+ − ×</small></button>
-      <button class="class-btn locked" id="btn4" data-class="4" onclick="handleClass4()">4. KLASSE <span class="lock-icon" id="lock4">🔒</span><br><small style="font-size:6px;opacity:.5">+ − × ÷</small><span class="price-tag" id="price4tag">NUR 2,00 €</span></button>
+      <button class="class-btn locked" id="btn3" data-class="3" onclick="handleClass3()">3. KLASSE <span class="lock-icon">🔒</span><br><small style="font-size:6px;opacity:.5">+ − ×</small><span class="price-tag">1,50 €</span></button>
+      <button class="class-btn locked" id="btn4" data-class="4" onclick="handleClass4()">4. KLASSE <span class="lock-icon" id="lock4">🔒</span><br><small style="font-size:6px;opacity:.5">+ − × ÷</small><span class="price-tag" id="price4tag">1,50 €</span></button>
     </div>
 
     <span class="diff-label">▶ SCHWIERIGKEIT</span>
@@ -744,7 +746,7 @@ body::after{
       </div>
       <div class="hud-box">
         <div class="hud-lbl">FRAGE</div>
-        <div class="hud-val nc" id="hQNum">1/20</div>
+        <div class="hud-val nc" id="hQNum">1/15</div>
       </div>
       <div class="hud-box">
         <div class="hud-lbl">RICHTIG</div>
@@ -785,7 +787,7 @@ body::after{
 
     <div class="prog-row">
       <div class="prog-track"><div class="prog-fill" id="progFill" style="width:0%"></div></div>
-      <span class="prog-lbl" id="progLbl">0 / 20</span>
+      <span class="prog-lbl" id="progLbl">0 / 15</span>
     </div>
   </div>
 
@@ -1389,6 +1391,7 @@ async function sha256hex(str){
 // Redirect nach Zahlung: https://DEINE-URL/?payment=success
 // ══════════════════════════════════════
 const STRIPE_PAYMENT_LINK = 'https://buy.stripe.com/3cI5kD8yrdVMa6r9TF8so00';
+const UNLOCK_PRICE = '1,50 €';
 const UNLOCK_KEY='matheblast_k4_unlocked';
 
 // ══════════════════════════════════════
@@ -1476,19 +1479,64 @@ function isUnlocked(){
 
 function unlock(){
   try{localStorage.setItem(UNLOCK_KEY,'1')}catch(e){}
-  updateClass4UI();
+  updateClassUI();
   showToast();
 }
 
-function updateClass4UI(){
-  const btn=document.getElementById('btn4');
-  const lock=document.getElementById('lock4');
-  const tag=document.getElementById('price4tag');
+function updateClass4UI(){ updateClassUI(); }
+
+function updateClassUI(){
+  var unlocked = isUnlocked();
+  // Klasse 3
+  var btn3=document.getElementById('btn3');
+  if(btn3){
+    if(unlocked){
+      btn3.classList.remove('locked');
+      btn3.onclick=function(){selClass(btn3);};
+      var lk3=btn3.querySelector('.lock-icon');
+      var tg3=btn3.querySelector('.price-tag');
+      if(lk3) lk3.style.display='none';
+      if(tg3) tg3.style.display='none';
+    }
+  }
+  // Klasse 4
+  var btn4=document.getElementById('btn4');
+  var lock4=document.getElementById('lock4');
+  var tag4=document.getElementById('price4tag');
+  if(btn4){
+    if(unlocked){
+      btn4.classList.remove('locked');
+      btn4.onclick=function(){selClass(btn4);};
+      if(lock4) lock4.style.display='none';
+      if(tag4) tag4.style.display='none';
+    }
+  }
+  // Diff buttons: only easy free when not unlocked
+  updateDiffButtons();
+}
+
+function updateDiffButtons(){
+  var unlocked=isUnlocked();
+  var klasse=state.klasse;
+  document.querySelectorAll('.diff-btn').forEach(function(btn){
+    var diff=btn.dataset.diff;
+    // Only Klasse 2 Easy is always free
+    var needsUnlock = !(klasse===2 && diff==='easy');
+    if(needsUnlock && !unlocked){
+      btn.classList.add('locked');
+      btn.onclick=function(){ showPaywall(); };
+    } else {
+      btn.classList.remove('locked');
+      btn.onclick=function(){ selDiff(btn); };
+    }
+  });
+}
+
+function handleClass3(){
   if(isUnlocked()){
-    btn.classList.remove('locked');
-    btn.onclick=function(){selClass(btn)};
-    if(lock) lock.style.display='none';
-    if(tag) tag.style.display='none';
+    selClass(document.getElementById('btn3'));
+  } else {
+    showPaywall();
   }
 }
 
@@ -1577,6 +1625,7 @@ function selClass(btn){
   document.querySelectorAll('.class-btn').forEach(b=>b.classList.remove('sel'));
   btn.classList.add('sel');
   state.klasse=+btn.dataset.class;
+  updateDiffButtons();
 }
 function selDiff(btn){
   document.querySelectorAll('.diff-btn').forEach(b=>b.classList.remove('sel'));
@@ -1734,6 +1783,10 @@ function makeWrong(correct,klasse,diff){
    GAME FLOW
 ══════════════════════════════════════ */
 function startGame(){
+  // Check if combination is allowed
+  if(!isUnlocked() && !(state.klasse===2 && state.diff==='easy')){
+    showPaywall(); return;
+  }
   const nm=document.getElementById('nameInput').value.trim().toUpperCase()||'SPIELER1';
   state.playerName=nm;
   Object.assign(state,{qIdx:0,score:0,correct:0,wrong:0,streak:0,bestStreak:0,active:true});
@@ -1757,7 +1810,7 @@ function loadQ(){
   const qEl=document.getElementById('qText');
   qEl.textContent=q.txt;
   qEl.classList.toggle('q-small',/\d{3}/.test(q.txt));
-  document.getElementById('hQNum').textContent=`${state.qIdx+1}/20`;
+  document.getElementById('hQNum').textContent=`${state.qIdx+1}/${TOTAL}`;
   document.getElementById('progFill').style.width=`${(state.qIdx/TOTAL)*100}%`;
   document.getElementById('progLbl').textContent=`${state.qIdx} / ${TOTAL}`;
   document.getElementById('feedback').textContent='';
@@ -2003,7 +2056,7 @@ if('serviceWorker' in navigator){
 })();
 
 // Init unlock state on load
-updateClass4UI();
+updateClassUI();
 renderShipSelector();
 updateBossButton();
 updateBossButton();
@@ -2099,12 +2152,20 @@ function updateBossButton(){
 function handleBoss(){ if(isBossUnlocked()) startBoss(); }
 
 function startBoss(){
+  clearInterval(bossState.timerInt);
   bossState={round:0,score:0,hp:10,maxHP:10,correct:0,timerInt:null,timerSecs:15,active:true};
+  // Remove any leftover overlay from previous game
+  var bs=document.getElementById('bossScreen');
+  bs.style.position='relative';
+  var old=bs.querySelector('.boss-overlay');
+  if(old) old.remove();
   show('bossScreen');
-  nextBossRound();
+  // Small delay to ensure screen is visible before starting
+  setTimeout(function(){ nextBossRound(); }, 100);
 }
 
 function nextBossRound(){
+  try {
   if(bossState.round>=BOSS_ROUNDS){ endBoss(); return; }
   bossState.round++;
   bossState.timerSecs = bossState.round>=(BOSS_ROUNDS-2) ? BOSS_TIMER_FAST : BOSS_TIMER_NORMAL;
@@ -2158,6 +2219,7 @@ function nextBossRound(){
   });
   document.getElementById('bossFeedback').textContent='';
   startBossTimer();
+  } catch(e){ console.error('Boss error:', e); }
 }
 
 function highlightCorrectBoss(container,correct){
@@ -2229,10 +2291,33 @@ function endBoss(){
   else { SFX.gameOver(); }
   addTotalScore(bossState.score);
   var s=getShipState();
-  var msg=won
-    ?'ENDBOSS BESIEGT! +'+bossState.score+' PUNKTE'+(s.unlocked.includes(4)?'\nLEGEND-SCHIFF FREIGESCHALTET!':'')
-    :'ENDBOSS HAT GEWONNEN\n'+bossState.correct+'/'+BOSS_ROUNDS+' TREFFER\n+'+bossState.score+' PUNKTE';
-  setTimeout(function(){ alert(msg); showHome(); }, won?600:200);
+
+  // Show result overlay inside boss screen
+  var overlay=document.createElement('div');
+  overlay.className='boss-overlay';
+  overlay.style.cssText='position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(0,8,32,0.95);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:100;';
+  
+  var title=document.createElement('div');
+  title.style.cssText='font-family:'Press Start 2P',monospace;font-size:18px;text-align:center;margin-bottom:20px;line-height:1.8;';
+  title.style.color=won?'#00FF66':'#FF4400';
+  title.textContent=won?'⚔ ENDBOSS BESIEGT!':'💀 NIEDERLAGE!';
+  
+  var info=document.createElement('div');
+  info.style.cssText='font-family:'Press Start 2P',monospace;font-size:9px;color:#FFD700;text-align:center;line-height:2.2;margin-bottom:20px;';
+  info.innerHTML='TREFFER: '+bossState.correct+'/'+BOSS_ROUNDS+'<br>PUNKTE: +'+bossState.score+(won&&s.unlocked.includes(4)?'<br><span style="color:#FFD700">★ LEGEND-SCHIFF FREI!</span>':'');
+
+  var btn=document.createElement('button');
+  btn.style.cssText='font-family:'Press Start 2P',monospace;font-size:10px;padding:12px 24px;background:transparent;border:2px solid '+(won?'#00FF66':'#FF4400')+';color:'+(won?'#00FF66':'#FF4400')+';cursor:pointer;';
+  btn.textContent=won?'▶ WEITER':'↩ NOCHMAL?';
+  btn.onclick=function(){ showHome(); };
+
+  overlay.appendChild(title);
+  overlay.appendChild(info);
+  overlay.appendChild(btn);
+  
+  var bs=document.getElementById('bossScreen');
+  bs.style.position='relative';
+  bs.appendChild(overlay);
 }
 
 function quitBoss(){ clearInterval(bossState.timerInt); bossState.active=false; showHome(); }
