@@ -2334,16 +2334,16 @@ function endBoss(){
   overlay.style.cssText='position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(0,8,32,0.95);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:100;';
   
   var title=document.createElement('div');
-  title.style.cssText='font-family:'Press Start 2P',monospace;font-size:18px;text-align:center;margin-bottom:20px;line-height:1.8;';
+  title.style.cssText="font-family:'Press Start 2P',monospace;font-size:18px;text-align:center;margin-bottom:20px;line-height:1.8;";
   title.style.color=won?'#00FF66':'#FF4400';
   title.textContent=won?'⚔ ENDBOSS BESIEGT!':'💀 NIEDERLAGE!';
   
   var info=document.createElement('div');
-  info.style.cssText='font-family:'Press Start 2P',monospace;font-size:9px;color:#FFD700;text-align:center;line-height:2.2;margin-bottom:20px;';
+  info.style.cssText="font-family:'Press Start 2P',monospace;font-size:9px;color:#FFD700;text-align:center;line-height:2.2;margin-bottom:20px;";
   info.innerHTML='TREFFER: '+bossState.correct+'/'+BOSS_ROUNDS+'<br>PUNKTE: +'+bossState.score+(won&&s.unlocked.includes(4)?'<br><span style="color:#FFD700">★ LEGEND-SCHIFF FREI!</span>':'');
 
   var btn=document.createElement('button');
-  btn.style.cssText='font-family:'Press Start 2P',monospace;font-size:10px;padding:12px 24px;background:transparent;border:2px solid '+(won?'#00FF66':'#FF4400')+';color:'+(won?'#00FF66':'#FF4400')+';cursor:pointer;';
+  btn.style.cssText='font-family:monospace;font-size:10px;padding:12px 24px;background:transparent;border:2px solid '+(won?'#00FF66':'#FF4400')+';color:'+(won?'#00FF66':'#FF4400')+';cursor:pointer;';
   btn.textContent=won?'▶ WEITER':'↩ NOCHMAL?';
   btn.onclick=function(){ showHome(); };
 
