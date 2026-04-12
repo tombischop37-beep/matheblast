@@ -685,7 +685,7 @@ body::after{
 
 
 .diff-btn.diff-locked{opacity:0.8;}
-.diff-btn.diff-locked::after{content:'🔒 1,50 €';font-size:6px;display:block;color:#FFD700;margin-top:2px;}
+.diff-btn.diff-locked::after{content:'🔒';font-size:10px;display:block;color:#FFD700;margin-top:2px;}
 
 
 /* ── SCHIFF-REQ POPUP ── */
@@ -746,8 +746,8 @@ body::after{
     <span class="class-label">▶ KLASSE WÄHLEN</span>
     <div class="class-btns">
       <button class="class-btn sel" data-class="2" onclick="selClass(this)">2. KLASSE<br><small style="font-size:6px;opacity:.5">+ −</small></button>
-      <button class="class-btn locked" id="btn3" data-class="3" onclick="handleClass3()">3. KLASSE<br><small style="font-size:6px;opacity:.5">+ − ×</small><br><span style="color:#FFD700;font-size:7px;">🔒 1,50 €</span></button>
-      <button class="class-btn locked" id="btn4" data-class="4" onclick="handleClass4()">4. KLASSE<br><small style="font-size:6px;opacity:.5">+ − × ÷</small><br><span id="lock4tag" style="color:#FFD700;font-size:7px;">🔒 1,50 €</span></button>
+      <button class="class-btn locked" id="btn3" data-class="3" onclick="handleClass3()">3. KLASSE<br><small style="font-size:6px;opacity:.5">+ − ×</small><br><span style="color:#FFD700;font-size:10px;">🔒</span></button>
+      <button class="class-btn locked" id="btn4" data-class="4" onclick="handleClass4()">4. KLASSE<br><small style="font-size:6px;opacity:.5">+ − × ÷</small><br><span id="lock4tag" style="color:#FFD700;font-size:10px;">🔒</span></button>
     </div>
 
     <span class="diff-label">▶ SCHWIERIGKEIT</span>
@@ -841,24 +841,24 @@ body::after{
   <!-- ════════ PAYWALL SCREEN ════════ -->
   <div class="screen" id="payScreen">
     <span class="pay-icon">🔓</span>
-    <div class="pay-title ny">KLASSE 3 + 4<br>FREISCHALTEN</div>
-    <div class="pay-sub">1,50 € einmalig – kein Abo!</div>
+    <div class="pay-title ny">🔒 ALLES<br>FREISCHALTEN</div>
+    <div class="pay-sub">Einmalig – kein Abo – für immer!</div>
 
     <div class="pay-features">
       <div class="pay-features-title">▶ DU BEKOMMST</div>
-      <div class="pay-feat">Alle 4.-Klasse-Aufgaben</div>
-      <div class="pay-feat">+ − × ÷ bis 10.000</div>
-      <div class="pay-feat">Alle 3 Schwierigkeiten</div>
+      <div class="pay-feat">Klasse 3 + 4 komplett</div>
+      <div class="pay-feat">Alle Schwierigkeiten</div>
+      <div class="pay-feat">Endboss-Modus</div>
       <div class="pay-feat">Für immer freigeschaltet</div>
     </div>
 
     <div class="price-box">
       <div class="price-once">EINMALIGER KAUFPREIS</div>
-      <div class="price-amount">2,00 €</div>
+      <div class="price-amount" style="font-size:clamp(36px,10vw,56px);">2,00 €</div>
       <div class="price-note">Apple Pay · Google Pay · Kreditkarte</div>
     </div>
 
-    <button class="btn-stripe" id="stripeBtn" onclick="startCheckout()">💳 JETZT FREISCHALTEN – 2,00 €</button>
+    <button class="btn-stripe" id="stripeBtn" onclick="startCheckout()">💳 ALLES FREISCHALTEN – 2,00 €</button>
     <div id="stripeError" style="font-family:VT323,monospace;font-size:16px;color:var(--red);text-align:center;min-height:20px;margin-top:6px"></div>
 
     <div class="code-divider">── ODER CODE EINGEBEN ──</div>
