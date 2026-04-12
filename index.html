@@ -644,7 +644,7 @@ body::after{
 }
 .ship-btn.unlocked{border-color:rgba(255,255,255,0.4);}
 .ship-btn.selected{border-color:#FFD700;box-shadow:0 0 10px rgba(255,215,0,0.5);}
-.ship-btn.locked{opacity:0.4;cursor:not-allowed;}
+.ship-btn.locked{opacity:0.7;cursor:pointer;}
 .ship-btn canvas{display:block;}
 .ship-btn .ship-lock{position:absolute;top:2px;right:3px;font-size:8px;}
 .ship-btn .ship-name{font-family:'Press Start 2P',monospace;font-size:5px;color:rgba(255,255,255,0.6);margin-top:1px;}
@@ -682,6 +682,27 @@ body::after{
 .boss-ans-btn.correct-ans{border-color:#00FF66 !important;color:#00FF66 !important;}
 .boss-timer-bar{height:6px;background:#FF4400;transition:width .1s linear;margin:0 12px;}
 .boss-progress{font-family:'Press Start 2P',monospace;font-size:8px;color:rgba(255,255,255,0.5);text-align:center;padding:4px;}
+
+
+.diff-btn.diff-locked{opacity:0.5;}
+.diff-btn.diff-locked::after{content:'🔒';font-size:8px;display:block;}
+
+
+/* ── SCHIFF-REQ POPUP ── */
+#shipReqPopup{
+  display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
+  background:#000820;border:2px solid #FFD700;padding:20px;
+  font-family:'Press Start 2P',monospace;text-align:center;
+  z-index:9999;min-width:260px;max-width:90vw;
+}
+#shipReqPopup .req-ship-name{font-size:14px;color:#FFD700;margin-bottom:12px;}
+#shipReqPopup .req-ship-canvas{display:block;margin:0 auto 12px;}
+#shipReqPopup .req-hint{font-size:9px;color:#00FFFF;line-height:2;margin-bottom:16px;white-space:pre-line;}
+#shipReqPopup .req-close{font-family:'Press Start 2P',monospace;font-size:8px;
+  background:transparent;border:1px solid #FFD700;color:#FFD700;
+  padding:8px 16px;cursor:pointer;}
+#shipReqOverlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;
+  background:rgba(0,0,0,0.6);z-index:9998;}
 
 </style>
 </head>
@@ -1398,11 +1419,16 @@ const UNLOCK_KEY='matheblast_k4_unlocked';
 // SCHIFF-SYSTEM
 // ══════════════════════════════════════
 const SHIPS = [
-  { id:0, name:'RANGER',  color:'#00FFFF', glow:'#00AAFF', desc:'Starter-Schiff',            req:null },
-  { id:1, name:'BLITZ',   color:'#FFFF00', glow:'#FFAA00', desc:'3x perfekte Runde',         req:{perfect:3, klasse:0} },
-  { id:2, name:'INFERNO', color:'#FF4400', glow:'#FF0000', desc:'3x perfekt in Klasse 3',    req:{perfect:3, klasse:3} },
-  { id:3, name:'PHANTOM', color:'#AA00FF', glow:'#7700CC', desc:'1x perfekt Kl.4 Mittel/Schwer', req:{perfect:1, klasse:4, minDiff:'medium'} },
-  { id:4, name:'LEGEND',  color:'#FFD700', glow:'#FFA500', desc:'Endboss besiegen',           req:{boss:true} },
+  { id:0, name:'RANGER',  color:'#00FFFF', glow:'#00AAFF',
+    desc:'Starter-Schiff', hint:null, req:null },
+  { id:1, name:'BLITZ',   color:'#FFFF00', glow:'#FFAA00',
+    desc:'3x perfekte Runde', hint:'3x ALLE FRAGEN RICHTIG\n(JEDE KLASSE / JEDE SCHWIERIGKEIT)', req:{perfect:3, klasse:0} },
+  { id:2, name:'INFERNO', color:'#FF4400', glow:'#FF0000',
+    desc:'3x perfekt in Kl.3', hint:'3x ALLE FRAGEN RICHTIG\nIN KLASSE 3', req:{perfect:3, klasse:3} },
+  { id:3, name:'PHANTOM', color:'#AA00FF', glow:'#7700CC',
+    desc:'1x perfekt Kl.4 Mittel/Schwer', hint:'1x ALLE FRAGEN RICHTIG\nKL. 4 · MITTEL ODER SCHWER', req:{perfect:1, klasse:4, minDiff:'medium'} },
+  { id:4, name:'LEGEND',  color:'#FFD700', glow:'#FFA500',
+    desc:'Endboss besiegen', hint:'ENDBOSS-MODUS GEWINNEN\n(INFERNO-SCHIFF ZUERST FREISPIELEN)', req:{boss:true} },
 ];
 
 const SHIP_KEY      = 'mb_ship_sel';
@@ -1511,6 +1537,14 @@ function updateClassUI(){
       if(tag4) tag4.style.display='none';
     }
   }
+  // Reset diff to easy if current selection not allowed
+  var unlocked=isUnlocked();
+  if(!unlocked && !(state.klasse===2 && state.diff==='easy')){
+    state.diff='easy';
+    document.querySelectorAll('.diff-btn').forEach(function(b){ b.classList.remove('sel'); });
+    var easyBtn=document.querySelector('.diff-btn[data-diff="easy"]');
+    if(easyBtn) easyBtn.classList.add('sel');
+  }
   // Diff buttons: only easy free when not unlocked
   updateDiffButtons();
 }
@@ -1520,14 +1554,11 @@ function updateDiffButtons(){
   var klasse=state.klasse;
   document.querySelectorAll('.diff-btn').forEach(function(btn){
     var diff=btn.dataset.diff;
-    // Only Klasse 2 Easy is always free
-    var needsUnlock = !(klasse===2 && diff==='easy');
-    if(needsUnlock && !unlocked){
-      btn.classList.add('locked');
-      btn.onclick=function(){ showPaywall(); };
+    var free = (klasse===2 && diff==='easy') || unlocked;
+    if(free){
+      btn.classList.remove('diff-locked');
     } else {
-      btn.classList.remove('locked');
-      btn.onclick=function(){ selDiff(btn); };
+      btn.classList.add('diff-locked');
     }
   });
 }
@@ -1628,6 +1659,7 @@ function selClass(btn){
   updateDiffButtons();
 }
 function selDiff(btn){
+  if(btn.classList.contains('diff-locked')){ showPaywall(); return; }
   document.querySelectorAll('.diff-btn').forEach(b=>b.classList.remove('sel'));
   btn.classList.add('sel');
   state.diff=btn.dataset.diff;
@@ -2322,6 +2354,25 @@ function endBoss(){
 
 function quitBoss(){ clearInterval(bossState.timerInt); bossState.active=false; showHome(); }
 
+
+function showShipReq(ship){
+  document.getElementById('reqShipName').textContent=ship.name;
+  document.getElementById('reqHint').textContent=ship.hint||ship.desc;
+  var cv=document.getElementById('reqShipCanvas');
+  var ctx2=cv.getContext('2d');
+  ctx2.clearRect(0,0,80,80);
+  ctx2.save(); ctx2.scale(2,2);
+  drawShipPreview(ctx2,ship,20,22);
+  ctx2.restore();
+  document.getElementById('shipReqOverlay').style.display='block';
+  document.getElementById('shipReqPopup').style.display='block';
+}
+
+function closeShipReq(){
+  document.getElementById('shipReqOverlay').style.display='none';
+  document.getElementById('shipReqPopup').style.display='none';
+}
+
 </script>
 
 <!-- FREISCHALT-CODE MODAL -->
@@ -2380,6 +2431,16 @@ function quitBoss(){ clearInterval(bossState.timerInt); bossState.active=false; 
   <div class="boss-answers" id="bossAnswers"></div>
   <div id="bossFeedback" style="font-family:'Press Start 2P',monospace;font-size:11px;text-align:center;min-height:20px;padding:4px;"></div>
   <button onclick="quitBoss()" style="font-family:'Press Start 2P',monospace;font-size:7px;background:transparent;border:1px solid #FFFF00;color:#FFFF00;padding:5px 10px;cursor:pointer;display:block;margin:4px auto;">✕ AUFGEBEN</button>
+</div>
+
+
+<!-- SCHIFF-REQ POPUP -->
+<div id="shipReqOverlay" onclick="closeShipReq()"></div>
+<div id="shipReqPopup">
+  <div class="req-ship-name" id="reqShipName">BLITZ</div>
+  <canvas class="req-ship-canvas" id="reqShipCanvas" width="80" height="80"></canvas>
+  <div class="req-hint" id="reqHint"></div>
+  <button class="req-close" onclick="closeShipReq()">✕ SCHLIESSEN</button>
 </div>
 
 </body>
