@@ -206,11 +206,12 @@ body::after{
 }
 .game-hdr-title{font-size:7px;letter-spacing:2px}
 .btn-quit{
-  background:transparent;border:1px solid var(--border);
-  color:rgba(255,255,255,0.3);font-family:'Press Start 2P',monospace;
+  background:transparent;border:2px solid #FFFF00;
+  color:#FFFF00;font-family:'Press Start 2P',monospace;
   font-size:7px;padding:5px 8px;cursor:pointer;transition:all .2s;letter-spacing:1px;
+  -webkit-appearance:none;appearance:none;-webkit-text-fill-color:#FFFF00 !important;
 }
-.btn-quit:hover{border-color:var(--red);color:var(--red)}
+.btn-quit:hover{border-color:var(--red);color:var(--red);-webkit-text-fill-color:var(--red) !important;}
 
 /* HUD row */
 .hud-row{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
@@ -660,15 +661,16 @@ body::after{
   cursor:pointer;transition:all .2s;letter-spacing:2px;
   -webkit-appearance:none;appearance:none;
   box-sizing:border-box;
+  text-align:center;display:block;
 }
 .btn-boss:hover{border-color:#FF6600;color:#FF6600;box-shadow:0 0 15px rgba(255,68,0,0.3);}
 .btn-boss.locked-boss{opacity:0.8;cursor:not-allowed;border-color:#FF4400;color:#FF4400;background:transparent !important;}
 .btn-boss .boss-lock-info{font-size:7px;opacity:0.7;display:block;margin-top:4px;}
 /* ENDBOSS SCREEN */
-#bossScreen{background:#000820 !important;padding:0 !important;}
-.boss-hud{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;border-bottom:1px solid #FF4400;}
+#bossScreen{background:#000820 !important;padding:0 !important;align-items:stretch;width:100%;box-sizing:border-box;}
+.boss-hud{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;border-bottom:1px solid #FF4400;width:100%;box-sizing:border-box;}
 .boss-eq{font-family:'Press Start 2P',monospace;font-size:clamp(20px,5vw,32px);color:#FFD700;text-align:center;
-  text-shadow:0 0 20px #FFD700;padding:16px 0 8px;}
+  text-shadow:0 0 20px #FFD700;padding:16px 0 8px;width:100%;box-sizing:border-box;}
 .boss-answers{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;padding:10px 12px;}
 .boss-ans-btn{
   width:clamp(80px,25vw,120px);height:70px;
@@ -1432,7 +1434,7 @@ const SHIPS = [
   { id:0, name:'RANGER',  color:'#00FFFF', glow:'#00AAFF',
     desc:'Starter-Schiff', hint:null, req:null },
   { id:1, name:'BLITZ',   color:'#FFFF00', glow:'#FFAA00',
-    desc:'3x perfekte Runde', hint:'3x ALLE FRAGEN RICHTIG\n(JEDE KLASSE / JEDE SCHWIERIGKEIT)', req:{perfect:3, klasse:0} },
+    desc:'3x perfekte Runde', hint:'3x RUNDEN PERFEKT\nKLASSE & SCHWIERIGKEIT\nEGAL – EINFACH 3x ALLES RICHTIG!', req:{perfect:3, klasse:0} },
   { id:2, name:'INFERNO', color:'#FF4400', glow:'#FF0000',
     desc:'3x perfekt in Kl.3', hint:'3x ALLE FRAGEN RICHTIG\nIN KLASSE 3', req:{perfect:3, klasse:3} },
   { id:3, name:'PHANTOM', color:'#AA00FF', glow:'#7700CC',
@@ -1823,7 +1825,17 @@ function startGame(){
   if(!isUnlocked() && !(state.klasse===2 && state.diff==='easy')){
     showPaywall(); return;
   }
-  const nm=document.getElementById('nameInput').value.trim().toUpperCase()||'SPIELER1';
+  var nameVal = document.getElementById('nameInput').value;
+  var nameCheck = validateName(nameVal);
+  if(!nameCheck.ok){
+    var ni = document.getElementById('nameInput');
+    ni.style.borderColor='var(--red)';
+    ni.placeholder=nameCheck.msg;
+    ni.value='';
+    setTimeout(function(){ ni.style.borderColor=''; ni.placeholder='SPIELER 1'; }, 2000);
+    return;
+  }
+  const nm = nameCheck.name;
   state.playerName=nm;
   Object.assign(state,{qIdx:0,score:0,correct:0,wrong:0,streak:0,bestStreak:0,active:true});
   resetUsedQ();
@@ -2424,6 +2436,95 @@ function renderAhnentafel(){
       '<div class="ahnentafel-score">'+entry.score+' PK</div>';
     el.appendChild(div);
   });
+}
+
+
+// ══════════════════════════════════════
+// CODE MODAL — nach Stripe Zahlung
+// ══════════════════════════════════════
+function showCodeModal(){
+  // Zufälligen Code aus der Liste holen
+  var codes = _getCodeList()();
+  var code = codes[Math.floor(Math.random() * codes.length)];
+  var el = document.getElementById('modalCode');
+  if(el) el.textContent = code;
+  // Code auch in localStorage sichern
+  try{ localStorage.setItem('matheblast_k4_code', code); }catch(e){}
+  // Modal anzeigen
+  var modal = document.getElementById('codeModal');
+  if(modal) modal.classList.add('show');
+  // Schritt 1 zeigen, Schritt 2 verstecken
+  var s1 = document.getElementById('codeStep1');
+  var s2 = document.getElementById('codeStep2');
+  if(s1) s1.style.display='block';
+  if(s2) s2.style.display='none';
+}
+
+function confirmCode(){
+  // Nutzer hat Code gesichert → Schritt 2 zeigen
+  var s1 = document.getElementById('codeStep1');
+  var s2 = document.getElementById('codeStep2');
+  if(s1) s1.style.display='none';
+  if(s2) s2.style.display='block';
+}
+
+function closeCodeModal(){
+  var modal = document.getElementById('codeModal');
+  if(modal) modal.classList.remove('show');
+  // Reset für nächstes Mal
+  var s1 = document.getElementById('codeStep1');
+  var s2 = document.getElementById('codeStep2');
+  if(s1) s1.style.display='block';
+  if(s2) s2.style.display='none';
+  showHome();
+}
+
+function copyCode(){
+  var code = document.getElementById('modalCode');
+  if(!code) return;
+  var text = code.textContent;
+  if(navigator.clipboard){
+    navigator.clipboard.writeText(text).then(function(){
+      var btn = document.querySelector('#codeModal .btn-copy');
+      if(btn){ btn.textContent='✓ KOPIERT!'; setTimeout(function(){ btn.textContent='📋 KOPIEREN'; },2000); }
+    });
+  }
+}
+
+
+// ══════════════════════════════════════
+// NAME FILTER — Schimpfwörter & politisch inkorrekte Namen
+// ══════════════════════════════════════
+const BAD_WORDS = [
+  // Deutsche Schimpfwörter
+  'ARSCH','ARSCHLOCH','SCHEISSE','SCHEISSE','SCHEISS','SCHEIS',
+  'FUCK','SHIT','IDIOT','TROTTEL','DEPP','VOLLIDIOT',
+  'WICHSER','HURENSOHN','BASTARD','VERDAMMT',
+  'KACKE','KACK','MIST','BLÖDMANN','BLÖD',
+  'DUMM','DUMMKOPF','SCHWACHKOPF','IRRE',
+  'NAZI','HITLER','HEIL','NEGER','KANAKE',
+  'PENNER','VERSAGER','LOSER','NOOB',
+  'PUSSY','DICK','PENIS','VAGINA','SEX','PORNO',
+  'TÖTEN','KILL','MORD','TERROR',
+  'HOMO','SCHWUL','LESBE',
+  // Englische Schimpfwörter
+  'ASSHOLE','BITCH','CUNT','NIGGER','FAGGOT',
+  'RETARD','MORON','STUPID','DUMB',
+];
+
+function containsBadWord(name) {
+  var upper = name.toUpperCase().replace(/[^A-Z0-9]/g, '');
+  return BAD_WORDS.some(function(word) {
+    return upper.includes(word.replace(/[^A-Z0-9]/g, ''));
+  });
+}
+
+function validateName(name) {
+  if(!name || name.trim().length === 0) return { ok: true, name: 'SPIELER1' };
+  var clean = name.trim().toUpperCase();
+  if(clean.length < 2) return { ok: false, msg: 'NAME ZU KURZ!' };
+  if(containsBadWord(clean)) return { ok: false, msg: 'NAME NICHT ERLAUBT!' };
+  return { ok: true, name: clean };
 }
 
 </script>
