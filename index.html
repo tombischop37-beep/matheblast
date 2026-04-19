@@ -2335,7 +2335,26 @@ function makeBossWrongs(correct){
 function endBoss(){
   bossState.active=false; clearInterval(bossState.timerInt);
   var won=bossState.hp<=0;
-  if(won){ setBossWin(); checkShipUnlocks(); SFX.victory(); saveAhnentafelEntry(state.playerName||'SPIELER1', bossState.score, bossState.correct, BOSS_ROUNDS); }
+  if(won){
+    setBossWin(); checkShipUnlocks(); SFX.victory();
+    // Für Ahnentafel: echten Namen abfragen wenn noch keiner gesetzt
+    var ahnName = state.playerName && state.playerName !== 'SPIELER1' ? state.playerName : null;
+    if(!ahnName){
+      var eingabe = '';
+      var versuche = 0;
+      while(versuche < 3){
+        eingabe = prompt('⚔ DU HAST DEN ENDBOSS BESIEGT!\nWie soll dein Name in der Ahnentafel stehen?\n(Max. 12 Zeichen)') || '';
+        eingabe = eingabe.trim().toUpperCase().slice(0,12);
+        if(!eingabe){ eingabe = 'HELD'; break; }
+        var nameCheck = validateName(eingabe);
+        if(nameCheck.ok){ ahnName = nameCheck.name; break; }
+        alert('❌ ' + nameCheck.msg + '\nBitte einen anderen Namen wählen.');
+        versuche++;
+      }
+      if(!ahnName) ahnName = 'HELD';
+    }
+    saveAhnentafelEntry(ahnName, bossState.score, bossState.correct, BOSS_ROUNDS);
+  }
   else { SFX.gameOver(); }
   addTotalScore(bossState.score);
   var s=getShipState();
@@ -2497,19 +2516,25 @@ function copyCode(){
 // ══════════════════════════════════════
 const BAD_WORDS = [
   // Deutsche Schimpfwörter
-  'ARSCH','ARSCHLOCH','SCHEISSE','SCHEISSE','SCHEISS','SCHEIS',
-  'FUCK','SHIT','IDIOT','TROTTEL','DEPP','VOLLIDIOT',
-  'WICHSER','HURENSOHN','BASTARD','VERDAMMT',
-  'KACKE','KACK','MIST','BLÖDMANN','BLÖD',
-  'DUMM','DUMMKOPF','SCHWACHKOPF','IRRE',
-  'NAZI','HITLER','HEIL','NEGER','KANAKE',
-  'PENNER','VERSAGER','LOSER','NOOB',
-  'PUSSY','DICK','PENIS','VAGINA','SEX','PORNO',
-  'TÖTEN','KILL','MORD','TERROR',
-  'HOMO','SCHWUL','LESBE',
+  'ARSCH','ARSCHLOCH','SCHEISSE','SCHEISS','SCHEIS',
+  'WICHSER','HURENSOHN','WICHSE','FICK','GEFICKT',
+  'KACKE','KACK','FOTZE','SCHWANZ','HURE',
+  'VOLLIDIOT','DUMMKOPF','SCHWACHKOPF','BLÖDMANN',
+  // Politisch inkorrektes (DE)
+  'NAZI','HITLER','HEIL','NEGER','KANAKE','NIGGER',
+  'JUDE','ZIGEUNER','BEHINDERTER','SPAST','SPASTIC',
+  'AUSLAENDER','AUSLÄNDER','AUSLÄNDERPROBLEM',
+  'VOLKSVERHETZUNG','RASSIST','RASSISMUS',
+  // Gewalt / Terror
+  'TOETEN','TÖTEN','MORD','MOERDER','KILLER',
+  'TERROR','TERRORIST','BOMBE','ATTENTAT',
   // Englische Schimpfwörter
-  'ASSHOLE','BITCH','CUNT','NIGGER','FAGGOT',
-  'RETARD','MORON','STUPID','DUMB',
+  'FUCK','SHIT','ASSHOLE','BITCH','CUNT',
+  'FAGGOT','RETARD','WHORE','NIGGER','COON',
+  'BASTARD','DICKHEAD','MOTHERFUCKER',
+  // Sexuell
+  'PENIS','VAGINA','PORNO','SEX','DILDO',
+  'PUSSY','DICK','COCK','TITS','BOOBS',
 ];
 
 function containsBadWord(name) {
@@ -2532,7 +2557,7 @@ function validateName(name) {
 <!-- FREISCHALT-CODE MODAL -->
 <div id="codeModal">
   <div id="codeModalBox">
-    <h2>✓ ZAHLUNG ERFOLGREICH!<br>KLASSE 4 FREIGESCHALTET!</h2>
+    <h2>✓ ZAHLUNG ERFOLGREICH!<br>KLASSE 3 + 4 FREIGESCHALTET!</h2>
     <p>DEIN PERSOENLICHER FREISCHALT-CODE:</p>
     <div class="code-display" id="modalCode" onclick="copyCode()">MATH-XXXX-XXXX</div>
     <button class="btn-copy" onclick="copyCode()">📋 KOPIEREN</button>
@@ -2583,8 +2608,8 @@ function validateName(name) {
     ⚠ SCHIESSE DIE FALSCHEN ANTWORTEN AB!
   </div>
   <div class="boss-answers" id="bossAnswers"></div>
-  <div id="bossFeedback" style="font-family:'Press Start 2P',monospace;font-size:11px;text-align:center;min-height:20px;padding:4px;"></div>
-  <button onclick="quitBoss()" style="font-family:'Press Start 2P',monospace;font-size:7px;background:transparent;border:1px solid #FFFF00;color:#FFFF00;padding:5px 10px;cursor:pointer;display:block;margin:4px auto;">✕ AUFGEBEN</button>
+  <div id="bossFeedback" style="font-family:'Press Start 2P',monospace;font-size:11px;text-align:center;min-height:20px;padding:4px;width:100%;box-sizing:border-box;"></div>
+  <button onclick="quitBoss()" style="font-family:'Press Start 2P',monospace;font-size:7px;background:transparent;border:1px solid #FFFF00;color:#FFFF00;padding:5px 10px;cursor:pointer;display:block;margin:4px auto;-webkit-appearance:none;-webkit-text-fill-color:#FFFF00;">✕ AUFGEBEN</button>
 </div>
 
 
