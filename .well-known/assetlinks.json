@@ -1,0 +1,8 @@
+[{
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "de.mathe_blast.www.twa",
+        "sha256_cert_fingerprints": ["4F:56:3D:6F:E9:EC:9D:8C:9F:64:B9:AF:A8:CC:BE:19:4B:E6:31:F4:7C:C0:A1:5C:47:02:23:09:03:35:32:0E"]
+      }
+    }]
