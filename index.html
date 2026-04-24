@@ -269,11 +269,18 @@ body::after{
   text-shadow:0 0 15px var(--yellow),0 0 40px rgba(255,230,0,0.4);
   letter-spacing:6px;
   white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  max-width:100%;
   animation:qPop .25s cubic-bezier(.34,1.56,.64,1);
 }
 .q-text.q-small{
-  font-size:clamp(15px,4.5vw,24px);
-  letter-spacing:3px;
+  font-size:clamp(14px,4.5vw,24px);
+  letter-spacing:2px;
+}
+.q-text.q-tiny{
+  font-size:clamp(11px,3.2vw,18px);
+  letter-spacing:1px;
 }
 @keyframes qPop{from{transform:scale(.7);opacity:0}to{transform:scale(1);opacity:1}}
 
@@ -1424,6 +1431,10 @@ async function sha256hex(str){
 // Redirect nach Zahlung: https://DEINE-URL/?payment=success
 // ══════════════════════════════════════
 const STRIPE_PAYMENT_LINK = 'https://buy.stripe.com/3cI5kD8yrdVMa6r9TF8so00';
+
+// ── SUPABASE CONFIG ──
+const SUPABASE_URL = 'https://rbgscwpdjhqvqwwtsxvz.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJiZ3Njd3BkamhxdnF3d3RzeHZ6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcwMTY3NjQsImV4cCI6MjA5MjU5Mjc2NH0.T_cqsJnhrN1PH7W1f8qp7RhV1rpXBRE3e5MukS8qRQE';
 const UNLOCK_PRICE = '1,50 €';
 const UNLOCK_KEY='matheblast_k4_unlocked';
 
@@ -1857,7 +1868,14 @@ function loadQ(){
 
   const qEl=document.getElementById('qText');
   qEl.textContent=q.txt;
-  qEl.classList.toggle('q-small',/\d{3}/.test(q.txt));
+  // Schriftgrösse nach Aufgaben-Länge
+  var qtxt = q.txt || '';
+  qEl.classList.remove('q-small','q-tiny');
+  if(qtxt.length > 18){
+    qEl.classList.add('q-tiny');
+  } else if(qtxt.length > 12 || /\d{3}/.test(qtxt)){
+    qEl.classList.add('q-small');
+  }
   document.getElementById('hQNum').textContent=`${state.qIdx+1}/${TOTAL}`;
   document.getElementById('progFill').style.width=`${(state.qIdx/TOTAL)*100}%`;
   document.getElementById('progLbl').textContent=`${state.qIdx} / ${TOTAL}`;
@@ -2410,17 +2428,10 @@ function closeShipReq(){
 
 
 // ══════════════════════════════════════
-// AHNENTAFEL — Endboss-Bezwinger
+// AHNENTAFEL — Global via Supabase
 // ══════════════════════════════════════
-var AHNENTAFEL_KEY = 'mb_ahnentafel';
 
-function getAhnentafel(){
-  try{ return JSON.parse(localStorage.getItem(AHNENTAFEL_KEY)||'[]'); }
-  catch(e){ return []; }
-}
-
-function saveAhnentafelEntry(name, score, correct, rounds){
-  var list = getAhnentafel();
+async function saveAhnentafelEntry(name, score, correct, rounds){
   var entry = {
     name: name,
     score: score,
@@ -2428,17 +2439,48 @@ function saveAhnentafelEntry(name, score, correct, rounds){
     rounds: rounds,
     date: new Date().toLocaleDateString('de-DE')
   };
-  list.unshift(entry); // Neueste zuerst
-  if(list.length > 50) list = list.slice(0,50); // Max 50 Einträge
-  try{ localStorage.setItem(AHNENTAFEL_KEY, JSON.stringify(list)); }catch(e){}
+  // Lokal als Backup
+  try{
+    var local = JSON.parse(localStorage.getItem('mb_ahnentafel')||'[]');
+    local.unshift(entry);
+    if(local.length > 50) local = local.slice(0,50);
+    localStorage.setItem('mb_ahnentafel', JSON.stringify(local));
+  }catch(e){}
+  // Global via Supabase
+  try{
+    await fetch(SUPABASE_URL + '/rest/v1/ahnentafel', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_KEY,
+        'Authorization': 'Bearer ' + SUPABASE_KEY,
+        'Prefer': 'return=minimal'
+      },
+      body: JSON.stringify(entry)
+    });
+  }catch(e){ console.log('Supabase save error:', e); }
 }
 
-function renderAhnentafel(){
-  var list = getAhnentafel();
+async function renderAhnentafel(){
   var el = document.getElementById('ahnentafelList');
   if(!el) return;
+  el.innerHTML = '<div class="ahnentafel-empty">⏳ LADE AHNENTAFEL...</div>';
+
+  var list = [];
+  // Global laden
+  try{
+    var resp = await fetch(
+      SUPABASE_URL + '/rest/v1/ahnentafel?select=*&order=score.desc&limit=50',
+      { headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY } }
+    );
+    if(resp.ok) list = await resp.json();
+  }catch(e){
+    // Fallback: lokal
+    try{ list = JSON.parse(localStorage.getItem('mb_ahnentafel')||'[]'); }catch(e2){}
+  }
+
   el.innerHTML = '';
-  if(list.length === 0){
+  if(!list || list.length === 0){
     el.innerHTML = '<div class="ahnentafel-empty">NOCH KEIN HELD\nHAT DEN ENDBOSS\nBESIEGT...\n\nBIST DU BEREIT?</div>';
     return;
   }
