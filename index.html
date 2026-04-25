@@ -674,11 +674,11 @@ body::after{
 .btn-boss.locked-boss{opacity:0.8;cursor:not-allowed;border-color:#FF4400;color:#FF4400;background:transparent !important;}
 .btn-boss .boss-lock-info{font-size:7px;opacity:0.7;display:block;margin-top:4px;}
 /* ENDBOSS SCREEN */
-#bossScreen{background:#000820 !important;padding:0 !important;align-items:stretch;width:100%;box-sizing:border-box;}
-.boss-hud{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;border-bottom:1px solid #FF4400;width:100%;box-sizing:border-box;}
+#bossScreen{background:#000820 !important;padding:0 !important;align-items:center;width:100%;box-sizing:border-box;}
+.boss-hud{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;border-bottom:1px solid #FF4400;width:100%;box-sizing:border-box;align-self:stretch;}
 .boss-eq{font-family:'Press Start 2P',monospace;font-size:clamp(20px,5vw,32px);color:#FFD700;text-align:center;
-  text-shadow:0 0 20px #FFD700;padding:16px 0 8px;width:100%;box-sizing:border-box;}
-.boss-answers{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;padding:10px 12px;}
+  text-shadow:0 0 20px #FFD700;padding:16px 0 8px;width:100%;box-sizing:border-box;align-self:stretch;}
+.boss-answers{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;padding:10px 12px;width:100%;box-sizing:border-box;align-self:stretch;}
 .boss-ans-btn{
   width:clamp(80px,25vw,120px);height:70px;
   font-family:'Press Start 2P',monospace;font-size:clamp(16px,4vw,24px);
@@ -2355,23 +2355,27 @@ function endBoss(){
   var won=bossState.hp<=0;
   if(won){
     setBossWin(); checkShipUnlocks(); SFX.victory();
-    // Für Ahnentafel: echten Namen abfragen wenn noch keiner gesetzt
-    var ahnName = state.playerName && state.playerName !== 'SPIELER1' ? state.playerName : null;
+    // Name für Ahnentafel — eigener Name oder abfragen
+    var ahnName = (state.playerName && state.playerName !== 'SPIELER1') ? state.playerName : null;
     if(!ahnName){
       var eingabe = '';
       var versuche = 0;
       while(versuche < 3){
-        eingabe = prompt('⚔ DU HAST DEN ENDBOSS BESIEGT!\nWie soll dein Name in der Ahnentafel stehen?\n(Max. 12 Zeichen)') || '';
+        eingabe = window.prompt('⚔ ENDBOSS BESIEGT!\nName für die Ahnentafel (max. 12 Zeichen):') || '';
         eingabe = eingabe.trim().toUpperCase().slice(0,12);
-        if(!eingabe){ eingabe = 'HELD'; break; }
-        var nameCheck = validateName(eingabe);
-        if(nameCheck.ok){ ahnName = nameCheck.name; break; }
-        alert('❌ ' + nameCheck.msg + '\nBitte einen anderen Namen wählen.');
+        if(!eingabe){ ahnName = 'HELD'; break; }
+        var nc = validateName(eingabe);
+        if(nc.ok){ ahnName = nc.name; break; }
+        window.alert('❌ ' + nc.msg + ' — bitte anderen Namen wählen.');
         versuche++;
       }
       if(!ahnName) ahnName = 'HELD';
     }
-    saveAhnentafelEntry(ahnName, bossState.score, bossState.correct, BOSS_ROUNDS);
+    // Direkt speichern (async — fire and forget mit explizitem await-Wrapper)
+    (async function(){ 
+      try { await saveAhnentafelEntry(ahnName, bossState.score, bossState.correct, BOSS_ROUNDS); }
+      catch(e){ console.error('Ahnentafel save error:', e); }
+    })();
   }
   else { SFX.gameOver(); }
   addTotalScore(bossState.score);
