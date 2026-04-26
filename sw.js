@@ -1,10 +1,11 @@
-const CACHE_NAME = 'matheblast-v13';
+const CACHE_NAME = 'matheblast-v14';
 const ASSETS = [
-  '/',
   '/index.html',
   '/manifest.json',
   '/icon-192.svg',
-  '/icon-512.svg'
+  '/icon-512.svg',
+  '/icon-192.png',
+  '/icon-512.png'
 ];
 
 self.addEventListener('install', e => {
@@ -22,18 +23,21 @@ self.addEventListener('activate', e => {
 });
 
 self.addEventListener('fetch', e => {
-  const url = e.request.url;
+  const url = new URL(e.request.url);
 
-  // Netlify Functions und externe APIs NIEMALS cachen — immer direkt ans Netz
-  if (url.includes('/.netlify/functions/') ||
-      url.includes('api.stripe.com') ||
-      url.includes('checkout.stripe.com') ||
-      !url.startsWith(self.location.origin)) {
+  // NIEMALS cachen: externe URLs, APIs, URLs mit Query-Parametern
+  if (
+    url.origin !== self.location.origin ||
+    url.search.length > 0 ||
+    url.pathname.includes('/.netlify/') ||
+    url.hostname.includes('stripe') ||
+    url.hostname.includes('supabase')
+  ) {
     e.respondWith(fetch(e.request));
     return;
   }
 
-  // Alles andere: Cache-first
+  // Statische Assets: Cache-first
   e.respondWith(
     caches.match(e.request).then(cached => {
       if (cached) return cached;
