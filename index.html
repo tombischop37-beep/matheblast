@@ -1443,15 +1443,20 @@ const UNLOCK_KEY='matheblast_k4_unlocked';
 // ══════════════════════════════════════
 const SHIPS = [
   { id:0, name:'RANGER',  color:'#00FFFF', glow:'#00AAFF',
-    desc:'Starter-Schiff', hint:null, req:null },
+    desc:'Starter-Schiff', hint:null, req:null,
+    story:'Dein erstes Raumschiff – der RANGER ist vielleicht kein Held, aber er hat Mut und genug Pixel-Power für den Start. Mit jedem gelösten Mathe-Rätsel lädt sich sein Antrieb weiter auf. Die Sterne sind noch weit, doch jeder richtige Rechenzug bringt dich näher. Bereit für dein erstes Abenteuer?' },
   { id:1, name:'BLITZ',   color:'#FFFF00', glow:'#FFAA00',
-    desc:'3x perfekte Runde', hint:'3x RUNDEN PERFEKT\nKLASSE & SCHWIERIGKEIT\nEGAL – EINFACH 3x ALLES RICHTIG!', req:{perfect:3, klasse:0} },
+    desc:'3x perfekte Runde', hint:'3x RUNDEN PERFEKT\nKLASSE & SCHWIERIGKEIT\nEGAL – EINFACH 3x ALLES RICHTIG!', req:{perfect:3, klasse:0},
+    story:'Der BLITZ schießt durch den Weltraum wie ein gelber Lichtstrahl. Nur wer schnell rechnet, kann seine volle Geschwindigkeit entfesseln. Zahlen fliegen vorbei – und du bist schneller. Zack, gerechnet, weiter geht\'s!' },
   { id:2, name:'INFERNO', color:'#FF4400', glow:'#FF0000',
-    desc:'3x perfekt in Kl.3', hint:'3x ALLE FRAGEN RICHTIG\nIN KLASSE 3', req:{perfect:3, klasse:3} },
+    desc:'3x perfekt in Kl.3', hint:'3x ALLE FRAGEN RICHTIG\nIN KLASSE 3', req:{perfect:3, klasse:3},
+    story:'Das INFERNO glüht vor Energie – ein Schiff für echte Rechen-Profis. Jede richtige Antwort entfacht seine Flammen stärker. Fehler? Die verbrennen hier sofort! Wer dieses Schiff steuert, hat Mathe im Blut.' },
   { id:3, name:'PHANTOM', color:'#AA00FF', glow:'#7700CC',
-    desc:'1x perfekt Kl.4 Mittel/Schwer', hint:'1x ALLE FRAGEN RICHTIG\nKL. 4 · MITTEL ODER SCHWER', req:{perfect:1, klasse:4, minDiff:'medium'} },
+    desc:'1x perfekt Kl.4 Mittel/Schwer', hint:'1x ALLE FRAGEN RICHTIG\nKL. 4 · MITTEL ODER SCHWER', req:{perfect:1, klasse:4, minDiff:'medium'},
+    story:'Das PHANTOM taucht aus dem Nichts auf – leise, schnell und ein bisschen geheimnisvoll. Nur clevere Köpfe können es freischalten. Zahlen verschwinden, Lösungen erscheinen – fast wie Magie. Kannst du rechnen, ohne gesehen zu werden?' },
   { id:4, name:'LEGEND',  color:'#FFD700', glow:'#FFA500',
-    desc:'Endboss besiegen', hint:'ENDBOSS-MODUS GEWINNEN\n(INFERNO-SCHIFF ZUERST FREISPIELEN)', req:{boss:true} },
+    desc:'Endboss besiegen', hint:'ENDBOSS-MODUS GEWINNEN\n(INFERNO-SCHIFF ZUERST FREISPIELEN)', req:{boss:true},
+    story:'Das LEGEND ist mehr als ein Raumschiff – es ist ein Mythos aus purem Gold. Nur die besten Mathe-Piloten dürfen es steuern. Jeder richtige Rechenzug lässt es heller strahlen. Wer hier sitzt, ist eine echte Rechen-Legende!' },
 ];
 
 const SHIP_KEY      = 'mb_ship_sel';
@@ -1475,6 +1480,31 @@ function setBossWin(){ try{localStorage.setItem(BOSS_WIN_KEY,'1');}catch(e){} }
 
 function getSelectedShip(){
   return getShipState().selected || 0;
+}
+
+function showShipUnlockStory(ship){
+  // Show story popup when ship is freshly unlocked
+  var overlay = document.createElement('div');
+  overlay.setAttribute('style',
+    'position:fixed;top:0;left:0;width:100%;height:100%;' +
+    'background:rgba(0,0,0,0.92);z-index:99999;' +
+    'display:flex;align-items:center;justify-content:center;' +
+    '-webkit-align-items:center;-webkit-justify-content:center;'
+  );
+  var pf = "'Press Start 2P',monospace";
+  var box = document.createElement('div');
+  box.setAttribute('style',
+    'background:#000820;border:2px solid '+ship.color+';' +
+    'padding:24px 20px;max-width:340px;width:90%;text-align:center;box-sizing:border-box;'
+  );
+  box.innerHTML =
+    '<div style="font-family:'+pf+';font-size:7px;color:'+ship.color+';margin-bottom:8px;letter-spacing:2px;">🚀 NEUES SCHIFF FREIGESCHALTET!</div>'+
+    '<div style="font-family:'+pf+';font-size:14px;color:'+ship.color+';text-shadow:0 0 15px '+ship.color+';margin-bottom:16px;">'+ship.name+'</div>'+
+    '<div style="font-family:sans-serif;font-size:13px;color:rgba(255,255,255,0.8);line-height:1.7;margin-bottom:20px;text-align:left;">'+ship.story+'</div>'+
+    '<button onclick="document.body.removeChild(overlay)" style="font-family:'+pf+';font-size:8px;background:transparent;border:2px solid '+ship.color+';color:'+ship.color+';padding:10px 20px;cursor:pointer;-webkit-appearance:none;">&#9658; VERSTANDEN!</button>';
+  overlay.appendChild(box);
+  document.body.appendChild(overlay);
+  SFX.victory();
 }
 
 function checkShipUnlocks(){
@@ -2440,7 +2470,19 @@ function quitBoss(){ clearInterval(bossState.timerInt); bossState.active=false; 
 
 function showShipReq(ship){
   document.getElementById('reqShipName').textContent=ship.name;
-  document.getElementById('reqHint').textContent=ship.hint||ship.desc;
+  // Show story for unlocked ships, hint for locked ships
+  var isUnlockedShip = getShipState().unlocked.includes(ship.id);
+  var el = document.getElementById('reqHint');
+  if(isUnlockedShip && ship.story){
+    el.textContent = ship.story;
+    el.style.color = ship.color;
+    el.style.fontSize = '8px';
+    el.style.lineHeight = '2';
+  } else {
+    el.textContent = ship.hint||ship.desc;
+    el.style.color = '#00FFFF';
+    el.style.fontSize = '9px';
+  }
   var cv=document.getElementById('reqShipCanvas');
   var ctx2=cv.getContext('2d');
   ctx2.clearRect(0,0,80,80);
