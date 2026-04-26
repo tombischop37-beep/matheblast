@@ -1532,6 +1532,11 @@ function unlock(){
   showToast();
 }
 
+function unlockSilent(){
+  try{localStorage.setItem(UNLOCK_KEY,'1')}catch(e){}
+  updateClassUI();
+}
+
 function updateClass4UI(){ updateClassUI(); }
 
 function updateClassUI(){
@@ -2111,20 +2116,12 @@ if('serviceWorker' in navigator){
 (function checkPaymentReturn(){
   const params = new URLSearchParams(window.location.search);
   if(params.get('payment') === 'success'){
-    // URL-Parameter sofort sichern
-    var isPaymentSuccess = true;
-    setTimeout(()=>{
-      unlock();
+    setTimeout(function(){
+      unlockSilent(); // kein Toast - Modal kommt stattdessen
       show('homeScreen');
-      // ERST Code Modal zeigen
-      setTimeout(function(){
-        if(isPaymentSuccess){
-          showCodeModal();
-          // URL erst NACH Modal-Anzeige bereinigen
-          window.history.replaceState({}, '', window.location.pathname);
-        }
-      }, 600);
-    }, 500);
+      window.history.replaceState({}, '', window.location.pathname);
+      showCodeModal();
+    }, 800);
   }
 })();
 
@@ -2527,21 +2524,77 @@ async function renderAhnentafel(){
 function showCodeModal(){
   var codes = _getCodeList()();
   var code = codes[Math.floor(Math.random() * codes.length)];
-  // Code speichern
   try{ localStorage.setItem('matheblast_k4_code', code); }catch(e){}
-  // Code anzeigen
-  var el = document.getElementById('modalCode');
-  if(el) el.textContent = code;
-  // Schritt 1 zeigen, Schritt 2 verstecken
-  var s1 = document.getElementById('codeStep1');
-  var s2 = document.getElementById('codeStep2');
-  if(s1) s1.style.display='block';
-  if(s2) s2.style.display='none';
-  // Modal einblenden - vollständiges cssText für iOS
-  var modal = document.getElementById('codeModal');
-  if(modal){
-    modal.setAttribute('style','display:flex !important;position:fixed !important;top:0 !important;left:0 !important;width:100% !important;height:100% !important;background:rgba(0,0,0,0.9) !important;z-index:10001 !important;align-items:center !important;justify-content:center !important;-webkit-align-items:center !important;-webkit-justify-content:center !important;');
-  }
+
+  // Altes Modal entfernen falls vorhanden
+  var old = document.getElementById('codeModalOverlay');
+  if(old) old.remove();
+
+  // Neues Modal direkt in body bauen — unabhängig von #app
+  var overlay = document.createElement('div');
+  overlay.id = 'codeModalOverlay';
+  overlay.setAttribute('style',
+    'position:fixed;top:0;left:0;width:100%;height:100%;' +
+    'background:rgba(0,0,0,0.92);z-index:99999;' +
+    'display:flex;align-items:center;justify-content:center;' +
+    '-webkit-align-items:center;-webkit-justify-content:center;'
+  );
+
+  var box = document.createElement('div');
+  box.setAttribute('style',
+    'background:#000820;border:2px solid #00FFFF;padding:24px 20px;' +
+    'max-width:340px;width:90%;text-align:center;box-sizing:border-box;'
+  );
+
+  var pf = 'Press Start 2P';
+  var st = 'font-family:' + pf + ',monospace;';
+  box.innerHTML = [
+    '<h2 style="' + st + 'font-size:10px;color:#00FFFF;margin-bottom:16px;line-height:1.8;">',
+    '✓ ZAHLUNG ERFOLGREICH!<br>KLASSE 3 + 4<br>FREIGESCHALTET!</h2>',
+    '<div id="codeDisplayNew" style="' + st + 'font-size:14px;color:#FFD700;',
+    'background:#050010;padding:12px;border:1px solid #FFD700;',
+    'margin:12px 0;letter-spacing:2px;cursor:pointer;" onclick="copyCodeNew()">',
+    code, '</div>',
+    '<p style="' + st + 'font-size:7px;color:#FF4400;line-height:2;margin:12px 0;">',
+    '⚠ WICHTIG!<br>MACHE JETZT EIN<br>BILDSCHIRMFOTO!<br>',
+    'Dieser Code schaltet das Spiel<br>auf jedem Gerät frei.</p>',
+    '<div id="codeStep1New">',
+    '<button onclick="confirmCodeNew()" style="' + st + 'font-size:9px;',
+    'background:transparent;border:2px solid #00FFFF;color:#00FFFF;',
+    'padding:12px 20px;cursor:pointer;width:100%;-webkit-appearance:none;">',
+    '📸 CODE GESICHERT!</button></div>',
+    '<div id="codeStep2New" style="display:none;">',
+    '<p style="' + st + 'font-size:8px;color:#00FF66;line-height:2;margin:12px 0;">',
+    '✓ SUPER!<br>Code jederzeit unter<br>"3. KLASSE" eingeben.</p>',
+    '<button onclick="closeCodeModalNew()" style="' + st + 'font-size:9px;',
+    'background:transparent;border:2px solid #00FF66;color:#00FF66;',
+    'padding:12px 20px;cursor:pointer;width:100%;-webkit-appearance:none;">',
+    '▶ JETZT SPIELEN!</button></div>'
+  ].join('');
+
+  overlay.appendChild(box);
+  document.body.appendChild(overlay);
+}
+
+function copyCodeNew(){
+  var el = document.getElementById('codeDisplayNew');
+  if(!el) return;
+  if(navigator.clipboard){ navigator.clipboard.writeText(el.textContent); }
+  el.style.background = '#001a00';
+  setTimeout(function(){ el.style.background = '#050010'; }, 500);
+}
+
+function confirmCodeNew(){
+  var s1 = document.getElementById('codeStep1New');
+  var s2 = document.getElementById('codeStep2New');
+  if(s1) s1.style.display = 'none';
+  if(s2) s2.style.display = 'block';
+}
+
+function closeCodeModalNew(){
+  var overlay = document.getElementById('codeModalOverlay');
+  if(overlay) overlay.remove();
+  showHome();
 }
 
 function confirmCode(){
