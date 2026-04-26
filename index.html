@@ -2115,11 +2115,9 @@ if('serviceWorker' in navigator){
       unlock();
       window.history.replaceState({}, '', window.location.pathname);
       show('homeScreen');
-    }, 600);
-    // Code Modal mit extra Delay damit homeScreen zuerst rendert
-    setTimeout(()=>{
-      showCodeModal();
-    }, 900);
+      // Code Modal nach kurzem Delay
+      setTimeout(function(){ showCodeModal(); }, 500);
+    }, 800);
   }
 })();
 
@@ -2425,13 +2423,24 @@ function showShipReq(ship){
   ctx2.save(); ctx2.scale(2,2);
   drawShipPreview(ctx2,ship,20,22);
   ctx2.restore();
-  document.getElementById('shipReqOverlay').style.display='block';
-  document.getElementById('shipReqPopup').style.display='block';
+  var overlay = document.getElementById('shipReqOverlay');
+  var popup = document.getElementById('shipReqPopup');
+  if(overlay) overlay.style.display='block';
+  if(popup){
+    popup.style.display='block';
+    popup.style.position='fixed';
+    popup.style.top='50%';
+    popup.style.left='50%';
+    popup.style.transform='translate(-50%,-50%)';
+    popup.style.zIndex='9999';
+  }
 }
 
 function closeShipReq(){
-  document.getElementById('shipReqOverlay').style.display='none';
-  document.getElementById('shipReqPopup').style.display='none';
+  var overlay = document.getElementById('shipReqOverlay');
+  var popup = document.getElementById('shipReqPopup');
+  if(overlay) overlay.style.display='none';
+  if(popup) popup.style.display='none';
 }
 
 
@@ -2512,21 +2521,25 @@ async function renderAhnentafel(){
 // CODE MODAL — nach Stripe Zahlung
 // ══════════════════════════════════════
 function showCodeModal(){
-  // Zufälligen Code aus der Liste holen
   var codes = _getCodeList()();
   var code = codes[Math.floor(Math.random() * codes.length)];
+  // Code speichern
+  try{ localStorage.setItem('matheblast_k4_code', code); }catch(e){}
+  // Code anzeigen
   var el = document.getElementById('modalCode');
   if(el) el.textContent = code;
-  // Code auch in localStorage sichern
-  try{ localStorage.setItem('matheblast_k4_code', code); }catch(e){}
-  // Modal anzeigen
-  var modal = document.getElementById('codeModal');
-  if(modal) modal.classList.add('show');
   // Schritt 1 zeigen, Schritt 2 verstecken
   var s1 = document.getElementById('codeStep1');
   var s2 = document.getElementById('codeStep2');
   if(s1) s1.style.display='block';
   if(s2) s2.style.display='none';
+  // Modal einblenden - style.display direkt setzen (iOS-sicher)
+  var modal = document.getElementById('codeModal');
+  if(modal){
+    modal.style.display='flex';
+    modal.style.alignItems='center';
+    modal.style.justifyContent='center';
+  }
 }
 
 function confirmCode(){
@@ -2539,8 +2552,7 @@ function confirmCode(){
 
 function closeCodeModal(){
   var modal = document.getElementById('codeModal');
-  if(modal) modal.classList.remove('show');
-  // Reset für nächstes Mal
+  if(modal) modal.style.display='none';
   var s1 = document.getElementById('codeStep1');
   var s2 = document.getElementById('codeStep2');
   if(s1) s1.style.display='block';
