@@ -2115,17 +2115,23 @@ if('serviceWorker' in navigator){
 // Stripe Payment Link Rückkehr erkennen
 (function checkPaymentReturn(){
   const params = new URLSearchParams(window.location.search);
-  var sessionId = params.get('session_id') || params.get('payment_intent') || '';
   if(params.get('payment') === 'success'){
-    setTimeout(function(){
+    // Warten bis DOM + alle Scripts geladen sind
+    function doPaymentSuccess(){
       unlockSilent();
       show('homeScreen');
       showCodeModal();
-      // URL erst ganz am Ende bereinigen - nicht vorher!
       setTimeout(function(){
         window.history.replaceState({}, '', window.location.pathname);
       }, 3000);
-    }, 800);
+    }
+    if(document.readyState === 'complete'){
+      setTimeout(doPaymentSuccess, 1000);
+    } else {
+      window.addEventListener('load', function(){
+        setTimeout(doPaymentSuccess, 1000);
+      });
+    }
   }
 })();
 
