@@ -2115,12 +2115,16 @@ if('serviceWorker' in navigator){
 // Stripe Payment Link Rückkehr erkennen
 (function checkPaymentReturn(){
   const params = new URLSearchParams(window.location.search);
+  var sessionId = params.get('session_id') || params.get('payment_intent') || '';
   if(params.get('payment') === 'success'){
     setTimeout(function(){
-      unlockSilent(); // kein Toast - Modal kommt stattdessen
+      unlockSilent();
       show('homeScreen');
-      window.history.replaceState({}, '', window.location.pathname);
       showCodeModal();
+      // URL erst ganz am Ende bereinigen - nicht vorher!
+      setTimeout(function(){
+        window.history.replaceState({}, '', window.location.pathname);
+      }, 3000);
     }, 800);
   }
 })();
