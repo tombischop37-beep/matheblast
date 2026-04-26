@@ -2115,9 +2115,11 @@ if('serviceWorker' in navigator){
       unlock();
       window.history.replaceState({}, '', window.location.pathname);
       show('homeScreen');
-      // Code modal anzeigen
-      showCodeModal();
     }, 600);
+    // Code Modal mit extra Delay damit homeScreen zuerst rendert
+    setTimeout(()=>{
+      showCodeModal();
+    }, 900);
   }
 })();
 
@@ -2176,7 +2178,9 @@ function renderShipSelector(){
       lk.className='ship-lock'; lk.textContent='🔒';
       btn.appendChild(lk);
     }
-    btn.onclick=function(){
+    btn.setAttribute('data-ship-id', ship.id);
+    btn.onclick=function(e){
+      e.stopPropagation();
       if(!unlocked){
         showShipReq(ship);
         return;

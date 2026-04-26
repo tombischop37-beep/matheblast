@@ -1,4 +1,4 @@
-const CACHE_NAME = 'matheblast-v5';
+const CACHE_NAME = 'matheblast-v6';
 const ASSETS = [
   '/',
   '/index.html',
