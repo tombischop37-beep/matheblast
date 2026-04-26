@@ -2126,7 +2126,7 @@ if('serviceWorker' in navigator){
       } catch(e){ 
         console.error('showCodeModal error:', e);
         // Fallback: direktes Alert mit Code
-        var codes = _getCodeList()();
+        var codes = _getCodeList();
         var code = codes[Math.floor(Math.random()*codes.length)];
         try{ localStorage.setItem('mb_unlocked','1'); }catch(ex){}
         alert('DEIN CODE: ' + code + '\n\nBitte notieren oder Screenshot machen!');
@@ -2542,7 +2542,7 @@ async function renderAhnentafel(){
 // CODE MODAL — nach Stripe Zahlung
 // ══════════════════════════════════════
 function showCodeModal(){
-  var codes = _getCodeList()();
+  var codes = _getCodeList();
   var code = codes[Math.floor(Math.random() * codes.length)];
   try{ localStorage.setItem('matheblast_k4_code', code); }catch(e){}
 
