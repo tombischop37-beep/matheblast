@@ -677,11 +677,11 @@ body::after{
 .btn-boss.locked-boss{opacity:0.8;cursor:not-allowed;border-color:#FF4400;color:#FF4400;background:transparent !important;}
 .btn-boss .boss-lock-info{font-size:7px;opacity:0.7;display:block;margin-top:4px;}
 /* ENDBOSS SCREEN */
-#bossScreen{background:#000820 !important;padding:0 !important;align-items:center !important;justify-content:space-between !important;width:100% !important;max-width:430px !important;box-sizing:border-box;margin:0 auto !important;}
+#bossScreen{background:#000820 !important;padding:0 !important;align-items:stretch !important;width:100% !important;max-width:430px !important;box-sizing:border-box;margin:0 auto !important;}
 .boss-hud{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;border-bottom:1px solid #FF4400;width:100%;box-sizing:border-box;}
 .boss-eq{font-family:'Press Start 2P',monospace;font-size:clamp(20px,5vw,32px);color:#FFD700;text-align:center;
-  text-shadow:0 0 20px #FFD700;padding:16px 0 8px;width:100%;box-sizing:border-box;}
-.boss-answers{display:flex;flex-direction:row;gap:10px;justify-content:center;flex-wrap:wrap;padding:16px 12px;width:100%;box-sizing:border-box;margin-top:auto;}
+  text-shadow:0 0 20px #FFD700;padding:40px 0 16px;width:100%;box-sizing:border-box;}
+.boss-answers{display:flex;flex-direction:row;gap:10px;justify-content:center;flex-wrap:wrap;padding:16px 12px;width:100%;box-sizing:border-box;}
 .boss-ans-btn{
   width:100px;height:70px;
   font-family:'Press Start 2P',monospace;font-size:clamp(16px,4vw,24px);
@@ -2368,7 +2368,7 @@ function highlightCorrectBoss(container,correct){
 function startBossTimer(){
   clearInterval(bossState.timerInt);
   var total=bossState.timerSecs, elapsed=0;
-  var bar=document.getElementById('bossTimerBar');
+  var bar=document.getElementById('bossTimerFill');
   var txt=document.getElementById('bossTimerText');
   bar.style.width='100%'; bar.style.background='#FF4400';
   txt.textContent=total;
@@ -2797,31 +2797,68 @@ function validateName(name) {
 
 
 <!-- ════════ ENDBOSS SCREEN ════════ -->
-<div class="screen" id="bossScreen">
-  <div style="width:100%;display:flex;flex-direction:column;flex:1;">
-  <div class="boss-hud">
-    <div style="font-family:'Press Start 2P',monospace;font-size:9px;color:#FF4400;">⚔ ENDBOSS</div>
-    <div id="bossRoundInfo" style="font-family:'Press Start 2P',monospace;font-size:9px;color:#FFD700;">RUNDE 1/10</div>
-    <div id="bossScore" style="font-family:'Press Start 2P',monospace;font-size:9px;color:#00FF66;">0 PK</div>
-    <button onclick="quitBoss()" style="font-family:'Press Start 2P',monospace;font-size:7px;background:transparent;border:2px solid #FFFF00;color:#FFFF00;padding:4px 8px;cursor:pointer;-webkit-appearance:none;-webkit-text-fill-color:#FFFF00;">✕ QUIT</button>
-  </div>
-  <div style="padding:6px 12px;">
-    <div class="boss-timer-bar" id="bossTimerBar" style="width:100%"></div>
-    <div id="bossTimerText" class="boss-progress">15</div>
-  </div>
-  <div id="bossEnemyHp" style="font-family:'Press Start 2P',monospace;font-size:7px;color:#FF4400;text-align:center;padding:2px;">
-    ENDBOSS HP: ██████████
-  </div>
-  <div class="boss-eq" id="bossEquation">12 + 7 =</div>
-  <div style="font-family:'Press Start 2P',monospace;font-size:8px;color:#FF4400;text-align:center;margin-bottom:6px;">
-    ⚠ SCHIESSE DIE FALSCHEN ANTWORTEN AB!
-  </div>
-  <div class="boss-answers" id="bossAnswers"></div>
-  <div id="bossFeedback" style="font-family:'Press Start 2P',monospace;font-size:11px;text-align:center;min-height:20px;padding:4px;width:100%;box-sizing:border-box;"></div>
+  <div class="screen" id="bossScreen">
+
+    <!-- HUD oben - wie normales Spiel -->
+    <div class="game-hdr">
+      <span class="game-hdr-title" style="color:#FF4400;">⚔ ENDBOSS</span>
+      <button class="btn-quit" onclick="quitBoss()">✕ QUIT</button>
+    </div>
+
+    <!-- Stats Row -->
+    <div class="hud-row">
+      <div class="hud-box">
+        <div class="hud-lbl">PUNKTE</div>
+        <div class="hud-val ny" id="bossScore">0 PK</div>
+      </div>
+      <div class="hud-box">
+        <div class="hud-lbl">RUNDE</div>
+        <div class="hud-val nc" id="bossRoundInfo">1/10</div>
+      </div>
+      <div class="hud-box">
+        <div class="hud-lbl">TREFFER</div>
+        <div class="hud-val ng" id="bossTreffer">0</div>
+      </div>
+      <div class="hud-box">
+        <div class="hud-lbl">BOSS HP</div>
+        <div class="hud-val" id="bossHPVal" style="color:#FF4400;">10</div>
+      </div>
+    </div>
+
+    <!-- Timer -->
+    <div class="timer-wrap">
+      <div class="timer-track">
+        <div class="timer-fill" id="bossTimerFill"></div>
+      </div>
+      <span class="timer-secs" id="bossTimerText">15</span>
+    </div>
+
+    <!-- HP Bar -->
+    <div style="padding:4px 0 2px;display:flex;align-items:center;gap:8px;">
+      <span style="font-family:'Press Start 2P',monospace;font-size:7px;color:#FF4400;">BOSS</span>
+      <div style="flex:1;height:8px;background:#1a0000;border:1px solid #FF4400;border-radius:2px;">
+        <div id="bossHPBar" style="height:100%;background:#FF4400;width:100%;transition:width .3s;border-radius:2px;"></div>
+      </div>
+    </div>
+
+    <!-- Gleichung - wie q-area -->
+    <div class="q-area panel panel-cyan" style="border-color:rgba(255,68,0,0.3);">
+      <span class="q-badge" style="color:#FF4400;">⚠ SCHIESSE DIE FALSCHEN ANTWORTEN AB!</span>
+      <div class="q-text" id="bossEquation">? = ?</div>
+      <div id="bossFeedback" style="font-family:'Press Start 2P',monospace;font-size:11px;text-align:center;min-height:20px;padding:4px;"></div>
+    </div>
+
+    <!-- 3 Antwort-Buttons wie normales Spiel aber 3 statt 4 -->
+    <div id="bossAnswers" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:8px 0;">
+    </div>
+
+    <!-- Fortschritt -->
+    <div class="prog-row">
+      <div class="prog-track"><div class="prog-fill" id="bossProgFill" style="width:0%;background:#FF4400;"></div></div>
+      <span class="prog-lbl" id="bossProgLbl">0 / 10</span>
+    </div>
 
   </div>
-</div>
-
 
 <!-- SCHIFF-REQ POPUP -->
 <div id="shipReqOverlay" onclick="closeShipReq()"></div>
