@@ -2811,17 +2811,15 @@ function validateName(name) {
 <!-- ════════ ENDBOSS SCREEN ════════ -->
   <div class="screen" id="bossScreen">
 
-    <!-- HUD oben - wie normales Spiel -->
     <div class="game-hdr">
       <span class="game-hdr-title" style="color:#FF4400;">⚔ ENDBOSS</span>
       <button class="btn-quit" onclick="quitBoss()">✕ QUIT</button>
     </div>
 
-    <!-- Stats Row -->
     <div class="hud-row">
       <div class="hud-box">
         <div class="hud-lbl">PUNKTE</div>
-        <div class="hud-val ny" id="bossScore">0 PK</div>
+        <div class="hud-val ny" id="bossScore">0</div>
       </div>
       <div class="hud-box">
         <div class="hud-lbl">RUNDE</div>
@@ -2837,7 +2835,6 @@ function validateName(name) {
       </div>
     </div>
 
-    <!-- Timer -->
     <div class="timer-wrap">
       <div class="timer-track">
         <div class="timer-fill" id="bossTimerFill"></div>
@@ -2845,28 +2842,26 @@ function validateName(name) {
       <span class="timer-secs" id="bossTimerText">15</span>
     </div>
 
-    <!-- HP Bar -->
-    <div style="padding:4px 0 2px;display:flex;align-items:center;gap:8px;">
-      <span style="font-family:'Press Start 2P',monospace;font-size:7px;color:#FF4400;">BOSS</span>
-      <div style="flex:1;height:8px;background:#1a0000;border:1px solid #FF4400;border-radius:2px;">
+    <div style="padding:2px 0 4px;display:flex;align-items:center;gap:8px;">
+      <span style="font-family:'Press Start 2P',monospace;font-size:6px;color:#FF4400;">BOSS</span>
+      <div style="flex:1;height:6px;background:#1a0000;border:1px solid #FF4400;border-radius:2px;">
         <div id="bossHPBar" style="height:100%;background:#FF4400;width:100%;transition:width .3s;border-radius:2px;"></div>
       </div>
     </div>
 
-    <!-- Gleichung - wie q-area -->
     <div class="q-area panel panel-cyan" style="border-color:rgba(255,68,0,0.3);">
       <span class="q-badge" style="color:#FF4400;">⚠ SCHIESSE DIE FALSCHEN ANTWORTEN AB!</span>
       <div class="q-text" id="bossEquation">? = ?</div>
-      <div id="bossFeedback" style="font-family:'Press Start 2P',monospace;font-size:11px;text-align:center;min-height:20px;padding:4px;"></div>
+      <div id="bossFeedback" style="font-family:'Press Start 2P',monospace;font-size:10px;text-align:center;min-height:18px;padding:2px;"></div>
     </div>
 
-    <!-- 3 Antwort-Buttons wie normales Spiel aber 3 statt 4 -->
-    <div id="bossAnswers" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:8px 0;">
+    <div class="answers" id="bossAnswers" style="grid-template-columns:repeat(3,1fr);">
     </div>
 
-    <!-- Fortschritt -->
     <div class="prog-row">
-      <div class="prog-track"><div class="prog-fill" id="bossProgFill" style="width:0%;background:#FF4400;"></div></div>
+      <div class="prog-track">
+        <div class="prog-fill" id="bossProgFill" style="width:0%;background:#FF4400;"></div>
+      </div>
       <span class="prog-lbl" id="bossProgLbl">0 / 10</span>
     </div>
 
