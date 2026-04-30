@@ -1,4 +1,4 @@
-const CACHE_NAME = 'matheblast-v31';
+const CACHE_NAME = 'matheblast-v32';
 const ASSETS = [
   '/index.html',
   '/manifest.json',
