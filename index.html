@@ -736,21 +736,7 @@ body::after{
 
 
 /* ── BOSS SCREEN SPEZIFISCH ── */
-#bossScreen .q-area{
-  flex:1;
-  min-height:0;
-  overflow:visible;
-}
-#bossScreen .answers{
-  grid-template-columns:repeat(3,1fr);
-  flex:0 0 auto;
-}
-#bossScreen .q-text{
-  font-size:clamp(16px,5vw,28px);
-  white-space:normal;
-  text-align:center;
-  line-height:1.4;
-}
+#bossScreen .battle-arena{height:60px;}
 </style>
 </head>
 <body>
@@ -2335,11 +2321,11 @@ function nextBossRound(){
   document.getElementById('bossEquation').textContent=q.txt;
   var correct=q.res;
   var wrongs=makeBossWrongs(correct);
-  var answers=[correct,wrongs[0],wrongs[1]];
+  var w3=correct+1; var att=0; while((w3===correct||w3===wrongs[0]||w3===wrongs[1])&&att<50){var sp=Math.max(5,Math.floor(correct*0.25));w3=correct+(Math.random()<0.5?1:-1)*(Math.floor(Math.random()*sp)+1);att++;} var answers=[correct,wrongs[0],wrongs[1],w3];
   answers.sort(function(){return Math.random()-0.5;});
   var container=document.getElementById('bossAnswers');
   container.innerHTML='';
-  var shotsLeft=2, done=false;
+  var shotsLeft=3, done=false;
   answers.forEach(function(ans){
     var btn=document.createElement('button');
     btn.className='ans-btn';
@@ -2857,20 +2843,19 @@ function validateName(name) {
       <span class="timer-secs" id="bossTimerText">15</span>
     </div>
 
-    <div style="padding:2px 0 4px;display:flex;align-items:center;gap:8px;">
-      <span style="font-family:'Press Start 2P',monospace;font-size:6px;color:#FF4400;">BOSS</span>
-      <div style="flex:1;height:6px;background:#1a0000;border:1px solid #FF4400;border-radius:2px;">
-        <div id="bossHPBar" style="height:100%;background:#FF4400;width:100%;transition:width .3s;border-radius:2px;"></div>
+    <div class="battle-arena" style="background:linear-gradient(180deg,#1a0000 0%,#050010 100%);">
+      <div style="width:100%;height:8px;background:#1a0000;border-bottom:1px solid #FF4400;">
+        <div id="bossHPBar" style="height:100%;background:#FF4400;width:100%;transition:width .3s;"></div>
       </div>
+      <div id="bossFeedback" style="font-family:'Press Start 2P',monospace;font-size:9px;text-align:center;padding:4px;min-height:16px;color:#FF4400;"></div>
     </div>
 
     <div class="q-area panel panel-cyan" style="border-color:rgba(255,68,0,0.3);">
-      <span class="q-badge" style="color:#FF4400;">⚠ SCHIESSE DIE FALSCHEN ANTWORTEN AB!</span>
+      <span class="q-badge" style="color:#FF4400;">⚠ SCHIESSE DIE FALSCHEN AB!</span>
       <div class="q-text" id="bossEquation">? = ?</div>
-      <div id="bossFeedback" style="font-family:'Press Start 2P',monospace;font-size:10px;text-align:center;min-height:18px;padding:2px;"></div>
     </div>
 
-    <div class="answers" id="bossAnswers" style="grid-template-columns:repeat(3,1fr);">
+    <div class="answers" id="bossAnswers" style="grid-template-columns:1fr 1fr;">
     </div>
 
     <div class="prog-row">
