@@ -30,7 +30,7 @@
   --soft:   #1A003A;
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-html,body{height:100%;overflow:hidden;background:var(--bg)}
+html,body{height:100%;overflow:hidden;background:var(--bg);display:flex;justify-content:center;}
 body{font-family:'Press Start 2P',monospace;display:flex;align-items:center;justify-content:center;min-height:100vh;position:relative}
 
 /* ══════════════════════════════════════
@@ -674,7 +674,7 @@ body::after{
 .btn-boss.locked-boss{opacity:0.8;cursor:not-allowed;border-color:#FF4400;color:#FF4400;background:transparent !important;}
 .btn-boss .boss-lock-info{font-size:7px;opacity:0.7;display:block;margin-top:4px;}
 /* ENDBOSS SCREEN */
-#bossScreen{background:#000820 !important;padding:0 !important;align-items:center !important;justify-content:center !important;width:100% !important;box-sizing:border-box;}
+#bossScreen{background:#000820 !important;padding:0 !important;align-items:stretch !important;width:100% !important;max-width:430px !important;box-sizing:border-box;margin:0 auto !important;}
 .boss-hud{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;border-bottom:1px solid #FF4400;width:100%;box-sizing:border-box;}
 .boss-eq{font-family:'Press Start 2P',monospace;font-size:clamp(20px,5vw,32px);color:#FFD700;text-align:center;
   text-shadow:0 0 20px #FFD700;padding:16px 0 8px;width:100%;box-sizing:border-box;}
@@ -2795,7 +2795,7 @@ function validateName(name) {
 
 <!-- ════════ ENDBOSS SCREEN ════════ -->
 <div class="screen" id="bossScreen">
-  <div style="width:100%;max-width:430px;margin:0 auto;display:flex;flex-direction:column;flex:1;align-self:center;">
+  <div style="width:100%;display:flex;flex-direction:column;flex:1;">
   <div class="boss-hud">
     <div style="font-family:'Press Start 2P',monospace;font-size:9px;color:#FF4400;">⚔ ENDBOSS</div>
     <div id="bossRoundInfo" style="font-family:'Press Start 2P',monospace;font-size:9px;color:#FFD700;">RUNDE 1/10</div>
