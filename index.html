@@ -677,11 +677,11 @@ body::after{
 .btn-boss.locked-boss{opacity:0.8;cursor:not-allowed;border-color:#FF4400;color:#FF4400;background:transparent !important;}
 .btn-boss .boss-lock-info{font-size:7px;opacity:0.7;display:block;margin-top:4px;}
 /* ENDBOSS SCREEN */
-#bossScreen{background:#000820 !important;padding:0 !important;align-items:stretch !important;width:100% !important;max-width:430px !important;box-sizing:border-box;margin:0 auto !important;}
+#bossScreen{background:#000820 !important;padding:0 !important;align-items:center !important;justify-content:space-between !important;width:100% !important;max-width:430px !important;box-sizing:border-box;margin:0 auto !important;}
 .boss-hud{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;border-bottom:1px solid #FF4400;width:100%;box-sizing:border-box;}
 .boss-eq{font-family:'Press Start 2P',monospace;font-size:clamp(20px,5vw,32px);color:#FFD700;text-align:center;
   text-shadow:0 0 20px #FFD700;padding:16px 0 8px;width:100%;box-sizing:border-box;}
-.boss-answers{display:flex;flex-direction:row;gap:10px;justify-content:center;flex-wrap:wrap;padding:10px 12px;width:100%;box-sizing:border-box;}
+.boss-answers{display:flex;flex-direction:row;gap:10px;justify-content:center;flex-wrap:wrap;padding:16px 12px;width:100%;box-sizing:border-box;margin-top:auto;}
 .boss-ans-btn{
   width:100px;height:70px;
   font-family:'Press Start 2P',monospace;font-size:clamp(16px,4vw,24px);
@@ -2803,6 +2803,7 @@ function validateName(name) {
     <div style="font-family:'Press Start 2P',monospace;font-size:9px;color:#FF4400;">⚔ ENDBOSS</div>
     <div id="bossRoundInfo" style="font-family:'Press Start 2P',monospace;font-size:9px;color:#FFD700;">RUNDE 1/10</div>
     <div id="bossScore" style="font-family:'Press Start 2P',monospace;font-size:9px;color:#00FF66;">0 PK</div>
+    <button onclick="quitBoss()" style="font-family:'Press Start 2P',monospace;font-size:7px;background:transparent;border:2px solid #FFFF00;color:#FFFF00;padding:4px 8px;cursor:pointer;-webkit-appearance:none;-webkit-text-fill-color:#FFFF00;">✕ QUIT</button>
   </div>
   <div style="padding:6px 12px;">
     <div class="boss-timer-bar" id="bossTimerBar" style="width:100%"></div>
@@ -2817,7 +2818,7 @@ function validateName(name) {
   </div>
   <div class="boss-answers" id="bossAnswers"></div>
   <div id="bossFeedback" style="font-family:'Press Start 2P',monospace;font-size:11px;text-align:center;min-height:20px;padding:4px;width:100%;box-sizing:border-box;"></div>
-  <button onclick="quitBoss()" style="font-family:'Press Start 2P',monospace;font-size:7px;background:transparent;border:1px solid #FFFF00;color:#FFFF00;padding:5px 10px;cursor:pointer;display:block;margin:4px auto;-webkit-appearance:none;-webkit-text-fill-color:#FFFF00;">✕ AUFGEBEN</button>
+
   </div>
 </div>
 
