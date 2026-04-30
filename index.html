@@ -2148,18 +2148,22 @@ if('serviceWorker' in navigator){
   if(params.get('payment') === 'success'){
     function doPaymentSuccess(){
       console.log('MatheBlast: payment success detected');
-      try { unlockSilent(); } catch(e){ console.error('unlockSilent error:', e); }
-      try { show('homeScreen'); } catch(e){ console.error('show error:', e); }
-      try { 
-        showCodeModal(); 
-        console.log('MatheBlast: showCodeModal called');
-      } catch(e){ 
-        console.error('showCodeModal error:', e);
-        // Fallback: direktes Alert mit Code
-        var codes = _getCodeList();
-        var code = codes[Math.floor(Math.random()*codes.length)];
-        try{ localStorage.setItem('mb_unlocked','1'); }catch(ex){}
-        alert('DEIN CODE: ' + code + '\n\nBitte notieren oder Screenshot machen!');
+      // Prüfen ob bereits verarbeitet (verhindert Doppel-Anzeige bei Reload)
+      var alreadyShown = false;
+      try{ alreadyShown = localStorage.getItem('mb_payment_shown') === '1'; }catch(e){}
+      try { unlockSilent(); } catch(e){}
+      try { show('homeScreen'); } catch(e){}
+      // Modal nur zeigen wenn noch nicht gezeigt
+      if(!alreadyShown){
+        try{ localStorage.setItem('mb_payment_shown','1'); }catch(e){}
+        try { showCodeModal(); }
+        catch(e){
+          console.error('showCodeModal error:', e);
+          var codes = _getCodeList();
+          var code = codes[Math.floor(Math.random()*codes.length)];
+          try{ localStorage.setItem('matheblast_k4_code', code); }catch(ex){}
+          alert('DEIN CODE: ' + code + '\n\nBitte notieren oder Screenshot machen!');
+        }
       }
       setTimeout(function(){
         window.history.replaceState({}, '', window.location.pathname);
@@ -2237,6 +2241,8 @@ function renderShipSelector(){
         showShipReq(ship);
         return;
       }
+      // Freigeschaltetes Schiff: Story zeigen UND auswählen
+      showShipReq(ship);
       var s2=getShipState(); s2.selected=ship.id; saveShipState(s2);
       if(req) req.textContent='';
       renderShipSelector();
@@ -2469,19 +2475,27 @@ function quitBoss(){ clearInterval(bossState.timerInt); bossState.active=false; 
 
 
 function showShipReq(ship){
-  document.getElementById('reqShipName').textContent=ship.name;
+  var isUnlockedShip2 = getShipState().unlocked.includes(ship.id);
+  var titleEl = document.getElementById('reqShipName');
+  titleEl.textContent = isUnlockedShip2 ? '🚀 ' + ship.name : '🔒 ' + ship.name;
   // Show story for unlocked ships, hint for locked ships
   var isUnlockedShip = getShipState().unlocked.includes(ship.id);
   var el = document.getElementById('reqHint');
   if(isUnlockedShip && ship.story){
     el.textContent = ship.story;
     el.style.color = ship.color;
-    el.style.fontSize = '8px';
-    el.style.lineHeight = '2';
+    el.style.fontFamily = 'sans-serif';
+    el.style.fontSize = '13px';
+    el.style.lineHeight = '1.7';
+    el.style.textAlign = 'left';
+    el.style.whiteSpace = 'normal';
   } else {
     el.textContent = ship.hint||ship.desc;
     el.style.color = '#00FFFF';
+    el.style.fontFamily = "'Press Start 2P',monospace";
     el.style.fontSize = '9px';
+    el.style.lineHeight = '2';
+    el.style.whiteSpace = 'pre-line';
   }
   var cv=document.getElementById('reqShipCanvas');
   var ctx2=cv.getContext('2d');
@@ -2584,9 +2598,14 @@ async function renderAhnentafel(){
 // CODE MODAL — nach Stripe Zahlung
 // ══════════════════════════════════════
 function showCodeModal(){
-  var codes = _getCodeList();
-  var code = codes[Math.floor(Math.random() * codes.length)];
-  try{ localStorage.setItem('matheblast_k4_code', code); }catch(e){}
+  // Immer denselben Code anzeigen (oder neuen generieren falls keiner existiert)
+  var code;
+  try{ code = localStorage.getItem('matheblast_k4_code'); }catch(e){}
+  if(!code){
+    var codes = _getCodeList();
+    code = codes[Math.floor(Math.random() * codes.length)];
+    try{ localStorage.setItem('matheblast_k4_code', code); }catch(e){}
+  }
 
   // Altes Modal entfernen falls vorhanden
   var old = document.getElementById('codeModalOverlay');
