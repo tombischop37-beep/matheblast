@@ -56,12 +56,14 @@ body::after{
    MAIN CONTAINER
 ══════════════════════════════════════ */
 #app{
-  position:relative;z-index:10;
+  position:fixed;
+  top:50%;left:50%;
+  transform:translate(-50%,-50%);
+  z-index:10;
   width:100%;max-width:430px;
   height:100vh;max-height:860px;
   display:flex;flex-direction:column;
   overflow:hidden;
-  margin:0 auto;
 }
 
 /* ══════════════════════════════════════
