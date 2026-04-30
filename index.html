@@ -737,13 +737,19 @@ body::after{
 
 /* ── BOSS SCREEN SPEZIFISCH ── */
 #bossScreen .q-area{
-  flex:0 0 auto;
-  min-height:120px;
-  max-height:160px;
+  flex:1;
+  min-height:0;
+  overflow:visible;
 }
 #bossScreen .answers{
   grid-template-columns:repeat(3,1fr);
   flex:0 0 auto;
+}
+#bossScreen .q-text{
+  font-size:clamp(16px,5vw,28px);
+  white-space:normal;
+  text-align:center;
+  line-height:1.4;
 }
 </style>
 </head>
@@ -2419,14 +2425,12 @@ function updateBossHP(){
 }
 
 function genBossQ(){
-  var ops=['+','-','x',':','px'];
+  var ops=['+','-','x',':'];
   var op=ops[rnd(0,ops.length-1)];
   var a,b,res,txt;
-  if(op==='px'){
-    a=rnd(2,9);b=rnd(10,30);var c2=rnd(5,50);var prod=a*b;
-    if(Math.random()<0.5){res=c2+prod;txt=c2+' + '+a+' x '+b;}
-    else{res=c2;txt=(c2+prod)+' - '+a+' x '+b;}
-  } else if(op==='+'){a=rnd(100,999);b=rnd(10,999);res=a+b;txt=a+' + '+b;}
+  if(false){ // px removed - too long for boss
+    a=0;b=0;res=0;txt='';
+  } else if(op==='+'){a=rnd(20,200);b=rnd(10,200);res=a+b;txt=a+' + '+b;}
   else if(op==='-'){a=rnd(200,999);b=rnd(10,a-10);res=a-b;txt=a+' - '+b;}
   else if(op==='x'){a=rnd(3,9);b=rnd(11,99);res=a*b;txt=a+' x '+b;}
   else{b=rnd(2,9);res=rnd(10,50);a=b*res;txt=a+' : '+b;}
