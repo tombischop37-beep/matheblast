@@ -2309,6 +2309,11 @@ function nextBossRound(){
   document.getElementById('bossRoundInfo').textContent='RUNDE '+bossState.round+'/'+BOSS_ROUNDS;
   document.getElementById('bossScore').textContent=bossState.score+' PK';
   updateBossHP();
+  // Update progress bar
+  var _pf=document.getElementById('bossProgFill');
+  var _pl=document.getElementById('bossProgLbl');
+  if(_pf) _pf.style.width=Math.round((bossState.round-1)/BOSS_ROUNDS*100)+'%';
+  if(_pl) _pl.textContent=(bossState.round-1)+' / '+BOSS_ROUNDS;
   var q=genBossQ();
   document.getElementById('bossEquation').textContent=q.txt;
   var correct=q.res;
@@ -2320,7 +2325,9 @@ function nextBossRound(){
   var shotsLeft=2, done=false;
   answers.forEach(function(ans){
     var btn=document.createElement('button');
-    btn.className='boss-ans-btn';
+    btn.className='ans-btn';
+    btn.style.borderColor='#FF00AA';
+    btn.style.color='#FF00AA';
     btn.textContent=ans;
     btn.onclick=function(){
       if(done||btn.classList.contains('shot')) return;
@@ -2360,7 +2367,7 @@ function nextBossRound(){
 }
 
 function highlightCorrectBoss(container,correct){
-  container.querySelectorAll('.boss-ans-btn').forEach(function(b){
+  container.querySelectorAll('.ans-btn').forEach(function(b){
     if(Number(b.textContent)===correct||b.textContent==String(correct)) b.classList.add('correct-ans');
   });
 }
@@ -2390,9 +2397,14 @@ function startBossTimer(){
 }
 
 function updateBossHP(){
-  var hp=bossState.hp, max=bossState.maxHP, bar='';
-  for(var i=0;i<max;i++) bar+=i<hp?'█':'░';
-  document.getElementById('bossEnemyHp').textContent='ENDBOSS HP: '+bar;
+  var hp=bossState.hp, max=bossState.maxHP;
+  var pct=Math.max(0,Math.round(hp/max*100));
+  var bar=document.getElementById('bossHPBar');
+  var val=document.getElementById('bossHPVal');
+  var tr=document.getElementById('bossTreffer');
+  if(bar) bar.style.width=pct+'%';
+  if(val){ val.textContent=hp; val.style.color=hp<=3?'#FF0000':hp<=6?'#FF8800':'#FF4400'; }
+  if(tr) tr.textContent=bossState.correct;
 }
 
 function genBossQ(){
