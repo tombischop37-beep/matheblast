@@ -2011,7 +2011,8 @@ function loadQ(){
   const ci=Math.floor(Math.random()*4);
   const wrongs=makeWrong(q.res,state.klasse,state.diff);
   const ans=[...wrongs];ans.splice(ci,0,q.res);
-  state.answers=ans;state.correctIdx=ci;
+  state.answers=ans; state.correctIdx=ci;
+  if(state.bossMode) state.bossWrongsLeft=3;
 
   const qEl=document.getElementById('qText');
   qEl.textContent=q.txt;
@@ -2096,31 +2097,25 @@ function timeout(){
 
 function answer(idx){
   if(state.answered||!state.active)return;
-  state.answered=true;
-  clearInterval(state.timerInt);
   const btns=document.querySelectorAll('#answersGrid .ans-btn');
-  btns.forEach(b=>b.disabled=true);
   const fb=document.getElementById('feedback');
 
+  if(!state.bossMode){
+    // Normaler Modus: sofort alle sperren
+    state.answered=true;
+    clearInterval(state.timerInt);
+    btns.forEach(b=>b.disabled=true);
+  }
+
   if(state.bossMode){
-    // BOSS-MODUS: falsche Antworten abschießen ist RICHTIG
-    if(idx!==state.correctIdx){
-      // Falsche Antwort getroffen — gut!
-      btns[idx].classList.add('correct');
-      state.bossHP=Math.max(0,(state.bossHP||10)-1);
-      state.correct++;
-      const pts=100+state.timerSecs*5;
-      state.score+=pts;
-      Battle.hit(); SFX.correct();
-      fb.style.color='var(--green)';
-      fb.textContent='💥 TREFFER! +'+pts;
-      spawnPop('+'+pts,'var(--green)');
-      btns[state.correctIdx].classList.add('correct');
-      updateBossHUD();
-      document.getElementById('hCorrect').textContent=state.correct;
-      document.getElementById('hScoreVal').textContent=state.score;
-    } else {
-      // Richtige Antwort getroffen — schlecht!
+    // BOSS-MODUS: erst prüfen ob dieser Button noch verfügbar
+    if(btns[idx].disabled) return;
+
+    if(idx===state.correctIdx){
+      // Richtige Antwort getroffen — schlecht! Runde sofort beenden
+      state.answered=true;
+      clearInterval(state.timerInt);
+      btns.forEach(b=>b.disabled=true);
       btns[idx].classList.add('wrong');
       state.bossHP=Math.min(state.bossMaxHP,(state.bossHP||10)+1);
       state.wrong++;
@@ -2129,8 +2124,39 @@ function answer(idx){
       fb.textContent='✗ DAS WAR RICHTIG! BOSS HEILT SICH!';
       spawnPop('✗','var(--red)');
       updateBossHUD();
+      setTimeout(nextQ,1500);
+    } else {
+      // Falsche Antwort abgeschossen — gut!
+      btns[idx].disabled=true;
+      btns[idx].classList.add('wrong');
+      state.bossWrongsLeft=(state.bossWrongsLeft||3)-1;
+      const pts=Math.round((100+state.timerSecs*5)/3);
+      state.score+=pts;
+      Battle.hit(); SFX.correct();
+      spawnPop('+'+pts,'var(--green)');
+      document.getElementById('hScoreVal').textContent=state.score;
+
+      if(state.bossWrongsLeft<=0){
+        // Alle Falschen abgeschossen — Runde gewonnen!
+        state.answered=true;
+        clearInterval(state.timerInt);
+        btns.forEach(b=>b.disabled=true);
+        btns[state.correctIdx].classList.add('correct');
+        state.bossHP=Math.max(0,(state.bossHP||10)-1);
+        state.correct++;
+        fb.style.color='var(--green)';
+        fb.textContent='💥 ALLE FALSCHEN ABGESCHOSSEN! TREFFER!';
+        updateBossHUD();
+        document.getElementById('hCorrect').textContent=state.correct;
+        document.getElementById('hScoreVal').textContent=state.score;
+        setTimeout(nextQ,1500);
+      } else {
+        // Noch weitere falsche übrig
+        fb.style.color='#FFFF00';
+        fb.textContent='💥 NOCH '+state.bossWrongsLeft+(state.bossWrongsLeft===1?' FALSCHE!':' FALSCHE!');
+      }
     }
-    setTimeout(nextQ,1400);
+    return; // Boss-Modus fertig — kein Fall-through in normalen Modus
   } else {
     // NORMALER MODUS
     if(idx===state.correctIdx){
