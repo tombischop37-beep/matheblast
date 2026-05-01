@@ -677,7 +677,7 @@ body::after{
 .btn-boss.locked-boss{opacity:0.8;cursor:not-allowed;border-color:#FF4400;color:#FF4400;background:transparent !important;}
 .btn-boss .boss-lock-info{font-size:7px;opacity:0.7;display:block;margin-top:4px;}
 /* ENDBOSS SCREEN */
-#bossScreen{background:#000820 !important;padding:0 !important;align-items:stretch !important;width:100% !important;max-width:430px !important;box-sizing:border-box;margin:0 auto !important;}
+#bossScreen{background:#000820 !important;padding:12px !important;gap:10px;align-items:stretch !important;width:100% !important;max-width:430px !important;box-sizing:border-box;margin:0 auto !important;}
 .boss-hud{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;border-bottom:1px solid #FF4400;width:100%;box-sizing:border-box;}
 .boss-eq{font-family:'Press Start 2P',monospace;font-size:clamp(20px,5vw,32px);color:#FFD700;text-align:center;
   text-shadow:0 0 20px #FFD700;padding:40px 0 16px;width:100%;box-sizing:border-box;}
@@ -2328,9 +2328,9 @@ function nextBossRound(){
   var shotsLeft=3, done=false;
   answers.forEach(function(ans){
     var btn=document.createElement('button');
+    btn.type='button';
     btn.className='ans-btn';
-    btn.style.borderColor='#FF00AA';
-    btn.style.color='#FF00AA';
+    btn.setAttribute('style','border-color:#FF00AA;color:#FF00AA;-webkit-appearance:none;appearance:none;');
     btn.textContent=ans;
     btn.onclick=function(){
       if(done||btn.classList.contains('shot')) return;
@@ -2850,12 +2850,12 @@ function validateName(name) {
       <div id="bossFeedback" style="font-family:'Press Start 2P',monospace;font-size:9px;text-align:center;padding:4px;min-height:16px;color:#FF4400;"></div>
     </div>
 
-    <div class="q-area panel panel-cyan" style="border-color:rgba(255,68,0,0.3);flex:0 0 140px;">
+    <div class="q-area panel panel-cyan" style="border-color:rgba(255,68,0,0.3);"><!-- flex:1 von .q-area -->
       <span class="q-badge" style="color:#FF4400;">⚠ SCHIESSE DIE FALSCHEN AB!</span>
       <div class="q-text" id="bossEquation">? = ?</div>
     </div>
 
-    <div class="answers" id="bossAnswers" style="grid-template-columns:1fr 1fr;">
+    <div class="answers" id="bossAnswers">
     </div>
 
     <div class="prog-row">
