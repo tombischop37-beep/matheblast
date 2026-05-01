@@ -270,10 +270,9 @@ body::after{
   font-size:clamp(24px,7vw,38px);
   color:var(--yellow);
   text-shadow:0 0 15px var(--yellow),0 0 40px rgba(255,230,0,0.4);
-  letter-spacing:6px;
+  letter-spacing:4px;
   white-space:nowrap;
-  overflow:hidden;
-  text-overflow:ellipsis;
+  overflow:visible;
   max-width:100%;
   animation:qPop .25s cubic-bezier(.34,1.56,.64,1);
 }
@@ -284,6 +283,8 @@ body::after{
 .q-text.q-tiny{
   font-size:clamp(11px,3.2vw,18px);
   letter-spacing:1px;
+  white-space:normal;
+  text-align:center;
 }
 @keyframes qPop{from{transform:scale(.7);opacity:0}to{transform:scale(1);opacity:1}}
 
@@ -677,7 +678,7 @@ body::after{
 .btn-boss.locked-boss{opacity:0.8;cursor:not-allowed;border-color:#FF4400;color:#FF4400;background:transparent !important;}
 .btn-boss .boss-lock-info{font-size:7px;opacity:0.7;display:block;margin-top:4px;}
 /* ENDBOSS SCREEN */
-#bossScreen{background:#000820 !important;padding:12px;gap:10px;}
+#bossScreen{background:#000820 !important;padding:12px;gap:10px;position:relative;}
 /* Boss-intro Modal */
 #bossIntro{
   display:none;position:fixed;inset:0;z-index:10000;
@@ -1473,7 +1474,7 @@ const STRIPE_PAYMENT_LINK = 'https://buy.stripe.com/3cI5kD8yrdVMa6r9TF8so00';
 // ── SUPABASE CONFIG ──
 const SUPABASE_URL = 'https://rbgscwpdjhqvqwwtsxvz.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJiZ3Njd3BkamhxdnF3d3RzeHZ6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcwMTY3NjQsImV4cCI6MjA5MjU5Mjc2NH0.T_cqsJnhrN1PH7W1f8qp7RhV1rpXBRE3e5MukS8qRQE';
-const UNLOCK_PRICE = '1,50 €';
+const UNLOCK_PRICE = '2,00 €';
 const UNLOCK_KEY='matheblast_k4_unlocked';
 
 // ══════════════════════════════════════
@@ -1955,8 +1956,7 @@ function loadQ(){
   document.getElementById('feedback').textContent='';
   document.getElementById('qStreakBadge').textContent=state.streak>=3?`🔥${state.streak}`:'';
 
-  const btns=document.querySelectorAll('.ans-btn');
-  btns.forEach((b,i)=>{b.textContent=ans[i];b.className='ans-btn';b.disabled=false});
+  const btns=document.querySelectorAll('#answersGrid .ans-btn');
 
   startTimer();
 }
@@ -1989,7 +1989,7 @@ function timeout(){
   const fb=document.getElementById('feedback');
   fb.style.color='var(--red)';
   fb.textContent='⌛ ZEIT! = '+state.answers[state.correctIdx];
-  const btns=document.querySelectorAll('.ans-btn');
+  const btns=document.querySelectorAll('#answersGrid .ans-btn');
   btns.forEach(b=>b.disabled=true);
   btns[state.correctIdx].classList.add('correct');
   setTimeout(nextQ,1500);
@@ -1999,7 +1999,7 @@ function answer(idx){
   if(state.answered||!state.active)return;
   state.answered=true;
   clearInterval(state.timerInt);
-  const btns=document.querySelectorAll('.ans-btn');
+  const btns=document.querySelectorAll('#answersGrid .ans-btn');
   btns.forEach(b=>b.disabled=true);
   const fb=document.getElementById('feedback');
 
@@ -2063,7 +2063,7 @@ function spawnPop(text,color){
 function showStreak(n){
   const el=document.createElement('div');
   el.className='streak-badge';
-  el.innerHTML=`<div class="st-text">${n}× SERIE! 🔥</div><div class="st-sub">BONUS +${Math.min(n*10,100)} PTS</div>`;
+  el.innerHTML=`<div class="st-text">${n}× SERIE! 🔥</div><div class="st-sub">BONUS +${Math.min(n*5,50)} PTS</div>`;
   document.body.appendChild(el);
   setTimeout(()=>el.remove(),800);
 }
@@ -2072,7 +2072,7 @@ function showStreak10(){
   const el=document.createElement('div');
   el.className='streak-badge';
   el.style.cssText='background:linear-gradient(135deg,rgba(255,230,0,0.95),rgba(255,100,0,0.95));border:2px solid #FFE600;';
-  el.innerHTML='<div class="st-text">🔥 10er SERIE! 🔥</div><div class="st-sub">MEGA-BONUS +250 PTS</div>';
+  el.innerHTML='<div class="st-text">🔥 10er SERIE! 🔥</div><div class="st-sub">MEGA-BONUS +100 PTS</div>';
   document.body.appendChild(el);
   setTimeout(()=>el.remove(),1200);
 }
@@ -2330,6 +2330,7 @@ function bossIntroStart(){
 function startBoss(){
   clearInterval(bossState.timerInt);
   bossState={round:0,score:0,hp:10,maxHP:10,correct:0,timerInt:null,timerSecs:15,active:true};
+  resetUsedQ();
   // Remove any leftover overlay from previous game
   var bs=document.getElementById('bossScreen');
   bs.style.position='relative';
@@ -2340,6 +2341,12 @@ function startBoss(){
   setTimeout(function(){ nextBossRound(); }, 100);
 }
 
+// Globaler Handler für onclick="bossAnswer(i)" in den festen Buttons
+var _bossClickHandler=null;
+function bossAnswer(i){
+  if(_bossClickHandler) _bossClickHandler(i);
+}
+
 function nextBossRound(){
   try {
   if(bossState.round>=BOSS_ROUNDS){ endBoss(); return; }
@@ -2348,7 +2355,6 @@ function nextBossRound(){
   document.getElementById('bossRoundInfo').textContent='RUNDE '+bossState.round+'/'+BOSS_ROUNDS;
   document.getElementById('bossScore').textContent=bossState.score+' PK';
   updateBossHP();
-  // Update progress bar
   var _pf=document.getElementById('bossProgFill');
   var _pl=document.getElementById('bossProgLbl');
   if(_pf) _pf.style.width=Math.round((bossState.round-1)/BOSS_ROUNDS*100)+'%';
@@ -2357,59 +2363,64 @@ function nextBossRound(){
   document.getElementById('bossEquation').textContent=q.txt;
   var correct=q.res;
   var wrongs=makeBossWrongs(correct);
-  var w3=correct+1; var att=0; while((w3===correct||w3===wrongs[0]||w3===wrongs[1])&&att<50){var sp=Math.max(5,Math.floor(correct*0.25));w3=correct+(Math.random()<0.5?1:-1)*(Math.floor(Math.random()*sp)+1);att++;} var answers=[correct,wrongs[0],wrongs[1],w3];
+  var w3=correct+1; var att=0; while((w3===correct||w3===wrongs[0]||w3===wrongs[1])&&att<50){var sp=Math.max(5,Math.floor(correct*0.25));w3=correct+(Math.random()<0.5?1:-1)*(Math.floor(Math.random()*sp)+1);att++;}
+  var answers=[correct,wrongs[0],wrongs[1],w3];
   answers.sort(function(){return Math.random()-0.5;});
-  var container=document.getElementById('bossAnswers');
-  container.innerHTML='';
+
+  // Verwende die festen Buttons — genau wie im normalen Spiel
+  var btns=[
+    document.getElementById('bossBtn0'),
+    document.getElementById('bossBtn1'),
+    document.getElementById('bossBtn2'),
+    document.getElementById('bossBtn3')
+  ];
   var shotsLeft=3, done=false;
-  answers.forEach(function(ans){
-    var btn=document.createElement('button');
-    btn.type='button';
-    btn.className='boss-ans-btn';
-    btn.setAttribute('data-l','');
-    btn.textContent=ans;
-    btn.onclick=function(){
-      if(done||btn.dataset.shot) return;
-      SFX.laser();
-      if(ans===correct){
-        btn.dataset.shot='1'; btn.classList.add('shot'); btn.textContent='✗ '+ans;
-        document.getElementById('bossFeedback').style.color='#FF4400';
-        document.getElementById('bossFeedback').textContent='✗ DAS WAR RICHTIG! TREFFER FÜR BOSS!';
-        bossState.hp=Math.min(bossState.maxHP,bossState.hp+1);
-        done=true; clearInterval(bossState.timerInt); SFX.wrong();
-        highlightCorrectBoss(container,correct);
-        setTimeout(nextBossRound,1800);
-      } else {
-        btn.dataset.shot='1'; btn.classList.add('shot'); btn.textContent='✗ '+ans;
-        shotsLeft--; SFX.hit();
-        if(shotsLeft<=0){
-          done=true; clearInterval(bossState.timerInt);
-          bossState.hp--; var tb=bossState.timerSecs*5;
-          bossState.score+=100+tb; bossState.correct++;
-          document.getElementById('bossFeedback').style.color='#00FF66';
-          document.getElementById('bossFeedback').textContent='✓ TREFFER! +'+(100+tb);
-          document.getElementById('bossScore').textContent=bossState.score+' PK';
-          updateBossHP(); SFX.correct();
-          highlightCorrectBoss(container,correct);
-          setTimeout(nextBossRound,1500);
-        } else {
-          document.getElementById('bossFeedback').style.color='#FFFF00';
-          document.getElementById('bossFeedback').textContent='✓ NOCH EINE!';
-        }
-      }
-    };
-    container.appendChild(btn);
+  btns.forEach(function(btn,i){
+    btn.textContent=answers[i];
+    btn.className='ans-btn';
+    btn.disabled=false;
+    btn.style.cssText='';
+    btn.onclick=null;
   });
+  _bossClickHandler=function(i){
+    var btn=btns[i]; var ans=answers[i];
+    if(done||btn.disabled) return;
+    SFX.laser();
+    if(ans===correct){
+      btn.disabled=true; btn.className='ans-btn wrong';
+      document.getElementById('bossFeedback').style.color='#FF4400';
+      document.getElementById('bossFeedback').textContent='✗ DAS WAR RICHTIG! BOSS HEILT SICH!';
+      bossState.hp=Math.min(bossState.maxHP,bossState.hp+1);
+      done=true; clearInterval(bossState.timerInt); SFX.wrong();
+      updateBossHP();
+      btns.forEach(function(b,j){ if(answers[j]===correct) b.className='ans-btn correct'; });
+      setTimeout(nextBossRound,1800);
+    } else {
+      btn.disabled=true; btn.className='ans-btn wrong';
+      shotsLeft--;
+      if(shotsLeft<=0){
+        done=true; clearInterval(bossState.timerInt);
+        bossState.hp--; var tb=bossState.timerSecs*5;
+        bossState.score+=100+tb; bossState.correct++;
+        document.getElementById('bossFeedback').style.color='#00FF66';
+        document.getElementById('bossFeedback').textContent='✓ TREFFER! +'+(100+tb)+' PK';
+        document.getElementById('bossScore').textContent=bossState.score+' PK';
+        updateBossHP(); SFX.correct();
+        btns.forEach(function(b,j){ if(answers[j]===correct) b.className='ans-btn correct'; });
+        setTimeout(nextBossRound,1500);
+      } else {
+        SFX.hit();
+        document.getElementById('bossFeedback').style.color='#FFFF00';
+        document.getElementById('bossFeedback').textContent='✓ WEITER! NOCH '+(shotsLeft===2?'ZWEI':'EINE')+' FALSCHE!';
+      }
+    }
+  };
+  document.getElementById('bossFeedback').style.color='#FF4400';
   document.getElementById('bossFeedback').textContent='';
   startBossTimer();
   } catch(e){ console.error('Boss error:', e); }
 }
 
-function highlightCorrectBoss(container,correct){
-  container.querySelectorAll('.boss-ans-btn').forEach(function(b){
-    if(Number(b.textContent)===correct||b.textContent==String(correct)) b.classList.add('correct-ans');
-  });
-}
 
 function startBossTimer(){
   clearInterval(bossState.timerInt);
@@ -2426,6 +2437,7 @@ function startBossTimer(){
     if(total-elapsed<=5) bar.style.background='#FF0000';
     if(elapsed>=total){
       clearInterval(bossState.timerInt);
+      _bossClickHandler=null;
       document.getElementById('bossFeedback').style.color='#FF4400';
       document.getElementById('bossFeedback').textContent='⌛ ZEIT! BOSS GREIFT AN!';
       bossState.hp=Math.min(bossState.maxHP,bossState.hp+1);
@@ -2447,16 +2459,16 @@ function updateBossHP(){
 }
 
 function genBossQ(){
-  var ops=['+','-','x',':'];
-  var op=ops[rnd(0,ops.length-1)];
-  var a,b,res,txt;
-  if(false){ // px removed - too long for boss
-    a=0;b=0;res=0;txt='';
-  } else if(op==='+'){a=rnd(20,200);b=rnd(10,200);res=a+b;txt=a+' + '+b;}
-  else if(op==='-'){a=rnd(200,999);b=rnd(10,a-10);res=a-b;txt=a+' - '+b;}
-  else if(op==='x'){a=rnd(3,9);b=rnd(11,99);res=a*b;txt=a+' x '+b;}
-  else{b=rnd(2,9);res=rnd(10,50);a=b*res;txt=a+' : '+b;}
-  return{txt:txt+' =',res:res};
+  return makeUniqueQ(function(){
+    var ops=['+','-','x',':'];
+    var op=ops[rnd(0,ops.length-1)];
+    var a,b,res,txt;
+    if(op==='+'){a=rnd(20,200);b=rnd(10,200);res=a+b;txt=a+' + '+b;}
+    else if(op==='-'){a=rnd(200,999);b=rnd(10,a-10);res=a-b;txt=a+' - '+b;}
+    else if(op==='x'){a=rnd(3,9);b=rnd(11,99);res=a*b;txt=a+' x '+b;}
+    else{b=rnd(2,9);res=rnd(10,50);a=b*res;txt=a+' : '+b;}
+    return{txt:txt+' =',res:res};
+  }, 50);
 }
 
 function makeBossWrongs(correct){
@@ -2518,7 +2530,7 @@ function endBoss(){
   var btn=document.createElement('button');
   btn.style.cssText='font-family:monospace;font-size:10px;padding:12px 24px;background:transparent;border:2px solid '+(won?'#00FF66':'#FF4400')+';color:'+(won?'#00FF66':'#FF4400')+';cursor:pointer;';
   btn.textContent=won?'▶ WEITER':'↩ NOCHMAL?';
-  btn.onclick=function(){ showHome(); };
+  btn.onclick=function(){ if(won){ showHome(); } else { var old2=document.getElementById('bossScreen').querySelector('.boss-overlay'); if(old2) old2.remove(); bossIntroStart(); } };
 
   overlay.appendChild(title);
   overlay.appendChild(info);
@@ -2856,7 +2868,7 @@ function validateName(name) {
     <div class="hud-row">
       <div class="hud-box">
         <div class="hud-lbl">PUNKTE</div>
-        <div class="hud-val ny" id="bossScore">0</div>
+        <div class="hud-val ny" id="bossScore">0 PK</div>
       </div>
       <div class="hud-box">
         <div class="hud-lbl">RUNDE</div>
@@ -2874,24 +2886,28 @@ function validateName(name) {
 
     <div class="timer-wrap">
       <div class="timer-track">
-        <div class="timer-fill" id="bossTimerFill"></div>
+        <div class="timer-fill" id="bossTimerFill" style="background:#FF4400;"></div>
       </div>
       <span class="timer-secs" id="bossTimerText">15</span>
     </div>
 
-    <div class="battle-arena" style="background:linear-gradient(180deg,#1a0000 0%,#050010 100%);">
+    <div class="battle-arena" style="background:linear-gradient(180deg,#1a0000 0%,#050010 100%);height:52px;">
       <div style="width:100%;height:8px;background:#1a0000;border-bottom:1px solid #FF4400;">
         <div id="bossHPBar" style="height:100%;background:#FF4400;width:100%;transition:width .3s;"></div>
       </div>
-      <div id="bossFeedback" style="font-family:'Press Start 2P',monospace;font-size:9px;text-align:center;padding:4px;min-height:16px;color:#FF4400;"></div>
+      <div id="bossFeedback" style="font-family:'Press Start 2P',monospace;font-size:9px;text-align:center;padding:4px;color:#FF4400;"></div>
     </div>
 
-    <div class="panel panel-cyan" style="border-color:rgba(255,68,0,0.3);padding:10px 12px;flex:0 0 auto;">
+    <div class="q-area panel panel-cyan" style="border-color:rgba(255,68,0,0.3);">
       <span class="q-badge" style="color:#FF4400;">⚠ SCHIESSE DIE FALSCHEN AB!</span>
       <div class="q-text" id="bossEquation">? = ?</div>
     </div>
 
-    <div class="boss-answers" id="bossAnswers">
+    <div class="answers" id="bossAnswers">
+      <button class="ans-btn" data-l="A" id="bossBtn0" onclick="bossAnswer(0)"></button>
+      <button class="ans-btn" data-l="B" id="bossBtn1" onclick="bossAnswer(1)"></button>
+      <button class="ans-btn" data-l="C" id="bossBtn2" onclick="bossAnswer(2)"></button>
+      <button class="ans-btn" data-l="D" id="bossBtn3" onclick="bossAnswer(3)"></button>
     </div>
 
     <div class="prog-row">
