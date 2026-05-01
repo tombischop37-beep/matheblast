@@ -679,53 +679,27 @@ body::after{
 .btn-boss.locked-boss{opacity:0.8;cursor:not-allowed;border-color:#FF4400;color:#FF4400;background:transparent !important;}
 .btn-boss .boss-lock-info{font-size:7px;opacity:0.7;display:block;margin-top:4px;}
 /* ENDBOSS SCREEN */
-/* ── BOSS SCREEN SPEZIFISCH ── */
-#bossScreen{background:#000820 !important;padding:12px;gap:10px;position:relative;overflow-y:hidden !important;}
-#bossScreen .battle-arena{height:120px;margin:0;}
-#bossScreen .q-area{flex:0 0 auto;min-height:120px;max-height:160px;}
-#bossScreen .answers{flex:0 0 auto;}
-/* Boss-intro Modal */
-#bossIntro{
+/* ── BOSS INTRO MODAL ── */
+#bossIntroModal{
   display:none;position:fixed;inset:0;z-index:10000;
-  background:rgba(0,0,0,0.85);
+  background:rgba(0,0,0,0.88);
   align-items:center;justify-content:center;
 }
-#bossIntro.active{display:flex;}
-#bossIntroBox{
+#bossIntroModal.active{display:flex;}
+#bossIntroBox2{
   background:#000820;border:2px solid #FF4400;
   padding:24px 20px;max-width:360px;width:90%;
   font-family:'Press Start 2P',monospace;text-align:center;
 }
-#bossIntroBox .bi-title{font-size:13px;color:#FF4400;text-shadow:0 0 12px #FF4400;margin-bottom:18px;line-height:1.6;}
-#bossIntroBox .bi-rule{font-size:8px;color:#FFD700;line-height:2.2;margin-bottom:18px;}
-#bossIntroBox .bi-sub{font-size:7px;color:rgba(255,255,255,0.5);line-height:2;margin-bottom:22px;}
-#bossIntroBox .bi-btn{
+#bossIntroBox2 .bi-title{font-size:12px;color:#FF4400;text-shadow:0 0 12px #FF4400;margin-bottom:16px;line-height:1.6;}
+#bossIntroBox2 .bi-rule{font-size:8px;color:#FFD700;line-height:2.4;margin-bottom:14px;}
+#bossIntroBox2 .bi-sub{font-size:7px;color:rgba(255,255,255,0.45);line-height:2;margin-bottom:20px;}
+#bossIntroBox2 .bi-btn{
   font-family:'Press Start 2P',monospace;font-size:9px;
   background:transparent;border:2px solid #FF4400;color:#FF4400;
   padding:12px 24px;cursor:pointer;letter-spacing:1px;
   -webkit-appearance:none;appearance:none;
 }
-.boss-hud{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;border-bottom:1px solid #FF4400;width:100%;box-sizing:border-box;}
-.boss-eq{font-family:'Press Start 2P',monospace;font-size:clamp(20px,5vw,32px);color:#FFD700;text-align:center;
-  text-shadow:0 0 20px #FFD700;padding:40px 0 16px;width:100%;box-sizing:border-box;}
-.boss-answers{
-  display:grid;grid-template-columns:1fr 1fr;gap:10px;
-  width:100%;box-sizing:border-box;
-}
-.boss-ans-btn{
-  width:100%;
-  padding:clamp(14px,4vw,20px) 8px;
-  font-family:'Press Start 2P',monospace;font-size:clamp(16px,5vw,26px);
-  background:#050010;border:2px solid #FF00AA;color:#FF00AA;
-  cursor:pointer;transition:all .15s;
-  -webkit-appearance:none;appearance:none;
-  touch-action:manipulation;
-}
-.boss-ans-btn:active{transform:scale(0.96);}
-.boss-ans-btn.shot{border-color:#FF4400 !important;color:#FF4400 !important;background:#1a0000 !important;opacity:0.5;}
-.boss-ans-btn.correct-ans{border-color:#00FF66 !important;color:#00FF66 !important;}
-.boss-timer-bar{height:6px;background:#FF4400;transition:width .1s linear;margin:0 12px;}
-.boss-progress{font-family:'Press Start 2P',monospace;font-size:8px;color:rgba(255,255,255,0.5);text-align:center;padding:4px;}
 
 
 .diff-btn.diff-locked{opacity:0.8;}
@@ -2041,19 +2015,23 @@ function loadQ(){
 
   const qEl=document.getElementById('qText');
   qEl.textContent=q.txt;
-  // Schriftgrösse nach Aufgaben-Länge
-  var qtxt = q.txt || '';
+  var qtxt=q.txt||'';
   qEl.classList.remove('q-small','q-tiny');
-  if(qtxt.length > 18){
-    qEl.classList.add('q-tiny');
-  } else if(qtxt.length > 12 || /\d{3}/.test(qtxt)){
-    qEl.classList.add('q-small');
-  }
-  document.getElementById('hQNum').textContent=`${state.qIdx+1}/${TOTAL}`;
-  document.getElementById('progFill').style.width=`${(state.qIdx/TOTAL)*100}%`;
-  document.getElementById('progLbl').textContent=`${state.qIdx} / ${TOTAL}`;
+  if(qtxt.length>18){ qEl.classList.add('q-tiny'); }
+  else if(qtxt.length>12||/\d{3}/.test(qtxt)){ qEl.classList.add('q-small'); }
+
+  const total=state.bossMode?BOSS_ROUNDS:TOTAL;
+  document.getElementById('hQNum').textContent=`${state.qIdx+1}/${total}`;
+  document.getElementById('progFill').style.width=`${(state.qIdx/total)*100}%`;
+  document.getElementById('progLbl').textContent=`${state.qIdx} / ${total}`;
   document.getElementById('feedback').textContent='';
-  document.getElementById('qStreakBadge').textContent=state.streak>=3?`🔥${state.streak}`:'';
+
+  if(state.bossMode){
+    document.getElementById('qStreakBadge').textContent='';
+    updateBossHUD();
+  } else {
+    document.getElementById('qStreakBadge').textContent=state.streak>=3?`🔥${state.streak}`:'';
+  }
 
   const btns=document.querySelectorAll('#answersGrid .ans-btn');
   btns.forEach((b,i)=>{b.textContent=ans[i];b.className='ans-btn';b.disabled=false;b.setAttribute('data-l',['A','B','C','D'][i]);});
@@ -2077,22 +2055,43 @@ function updateTimer(){
   const fill=document.getElementById('timerFill');
   const sec=document.getElementById('timerSecs');
   fill.style.width=pct+'%';
-  fill.className='timer-fill'+(pct<=30?' danger':pct<=55?' warn':'');
+  if(state.bossMode){
+    fill.className='timer-fill'+(pct<=30?' danger':pct<=55?' warn':'');
+    fill.style.background=pct<=30?'#FF0000':pct<=55?'#FF6600':'#FF4400';
+  } else {
+    fill.style.background='';
+    fill.className='timer-fill'+(pct<=30?' danger':pct<=55?' warn':'');
+  }
   sec.textContent=state.timerSecs;
 }
 
 function timeout(){
   if(state.answered)return;
   state.answered=true;
-  state.wrong++;state.streak=0;
-  Battle.miss();
-  const fb=document.getElementById('feedback');
-  fb.style.color='var(--red)';
-  fb.textContent='⌛ ZEIT! = '+state.answers[state.correctIdx];
-  const btns=document.querySelectorAll('#answersGrid .ans-btn');
-  btns.forEach(b=>b.disabled=true);
-  btns[state.correctIdx].classList.add('correct');
-  setTimeout(nextQ,1500);
+  if(state.bossMode){
+    // Zeit abgelaufen im Boss — Boss-HP steigt
+    state.bossHP=Math.min(state.bossMaxHP,(state.bossHP||10)+1);
+    state.wrong++;
+    Battle.miss(); SFX.wrong();
+    const fb=document.getElementById('feedback');
+    fb.style.color='var(--red)';
+    fb.textContent='⌛ ZEIT! BOSS HEILT SICH! = '+state.answers[state.correctIdx];
+    const btns=document.querySelectorAll('#answersGrid .ans-btn');
+    btns.forEach(b=>b.disabled=true);
+    btns[state.correctIdx].classList.add('correct');
+    updateBossHUD();
+    setTimeout(nextQ,1500);
+  } else {
+    state.wrong++;state.streak=0;
+    Battle.miss();
+    const fb=document.getElementById('feedback');
+    fb.style.color='var(--red)';
+    fb.textContent='⌛ ZEIT! = '+state.answers[state.correctIdx];
+    const btns=document.querySelectorAll('#answersGrid .ans-btn');
+    btns.forEach(b=>b.disabled=true);
+    btns[state.correctIdx].classList.add('correct');
+    setTimeout(nextQ,1500);
+  }
 }
 
 function answer(idx){
@@ -2103,51 +2102,91 @@ function answer(idx){
   btns.forEach(b=>b.disabled=true);
   const fb=document.getElementById('feedback');
 
-  if(idx===state.correctIdx){
-    state.correct++;
-    state.streak++;
-    if(state.streak>state.bestStreak) state.bestStreak=state.streak;
-    const classM=state.klasse===2?1:state.klasse===3?2:3;
-    const diffM=state.diff==='easy'?1:state.diff==='medium'?1.5:2;
-    const base=Math.round(10*classM*diffM);
-    const tBonus=Math.round(state.timerSecs*DIFF_BONUS[state.diff]*classM*0.3);
-    const sBonus=state.streak>1?Math.min(state.streak*5,50):0;
-    const serieBonus=state.streak===10?100:0;
-    const pts=base+tBonus+sBonus+serieBonus;
-    state.score+=pts;
-    btns[idx].classList.add('correct');
-    Battle.hit();
-    SFX.correct();
-    fb.style.color='var(--green)';
-    const msgs=['✓ RICHTIG!','✓ SUPER!','✓ KLASSE!','✓ BRAVO!','✓ PERFEKT!','✓ WOW!'];
-    fb.textContent=msgs[Math.floor(Math.random()*msgs.length)]+' +'+pts;
-    spawnPop('+'+pts,'var(--green)');
-    if(state.streak===10) showStreak10();
-    else if(state.streak>=3) showStreak(state.streak);
-    document.getElementById('hStreak').textContent=state.streak+'🔥';
-    document.getElementById('hCorrect').textContent=state.correct;
-    document.getElementById('hScoreVal').textContent=state.score;
+  if(state.bossMode){
+    // BOSS-MODUS: falsche Antworten abschießen ist RICHTIG
+    if(idx!==state.correctIdx){
+      // Falsche Antwort getroffen — gut!
+      btns[idx].classList.add('correct');
+      state.bossHP=Math.max(0,(state.bossHP||10)-1);
+      state.correct++;
+      const pts=100+state.timerSecs*5;
+      state.score+=pts;
+      Battle.hit(); SFX.correct();
+      fb.style.color='var(--green)';
+      fb.textContent='💥 TREFFER! +'+pts;
+      spawnPop('+'+pts,'var(--green)');
+      btns[state.correctIdx].classList.add('correct');
+      updateBossHUD();
+      document.getElementById('hCorrect').textContent=state.correct;
+      document.getElementById('hScoreVal').textContent=state.score;
+    } else {
+      // Richtige Antwort getroffen — schlecht!
+      btns[idx].classList.add('wrong');
+      state.bossHP=Math.min(state.bossMaxHP,(state.bossHP||10)+1);
+      state.wrong++;
+      Battle.miss(); SFX.wrong();
+      fb.style.color='var(--red)';
+      fb.textContent='✗ DAS WAR RICHTIG! BOSS HEILT SICH!';
+      spawnPop('✗','var(--red)');
+      updateBossHUD();
+    }
+    setTimeout(nextQ,1400);
   } else {
-    state.wrong++;state.streak=0;
-    btns[idx].classList.add('wrong');
-    btns[state.correctIdx].classList.add('correct');
-    Battle.miss();
-    SFX.wrong();
-    fb.style.color='var(--red)';
-    fb.textContent='✗ FALSCH! = '+state.answers[state.correctIdx];
-    spawnPop('✗','var(--red)');
-    document.getElementById('hStreak').textContent='0🔥';
+    // NORMALER MODUS
+    if(idx===state.correctIdx){
+      state.correct++;
+      state.streak++;
+      if(state.streak>state.bestStreak) state.bestStreak=state.streak;
+      const classM=state.klasse===2?1:state.klasse===3?2:3;
+      const diffM=state.diff==='easy'?1:state.diff==='medium'?1.5:2;
+      const base=Math.round(10*classM*diffM);
+      const tBonus=Math.round(state.timerSecs*DIFF_BONUS[state.diff]*classM*0.3);
+      const sBonus=state.streak>1?Math.min(state.streak*5,50):0;
+      const serieBonus=state.streak===10?100:0;
+      const pts=base+tBonus+sBonus+serieBonus;
+      state.score+=pts;
+      btns[idx].classList.add('correct');
+      Battle.hit(); SFX.correct();
+      fb.style.color='var(--green)';
+      const msgs=['✓ RICHTIG!','✓ SUPER!','✓ KLASSE!','✓ BRAVO!','✓ PERFEKT!','✓ WOW!'];
+      fb.textContent=msgs[Math.floor(Math.random()*msgs.length)]+' +'+pts;
+      spawnPop('+'+pts,'var(--green)');
+      if(state.streak===10) showStreak10();
+      else if(state.streak>=3) showStreak(state.streak);
+      document.getElementById('hStreak').textContent=state.streak+'🔥';
+      document.getElementById('hCorrect').textContent=state.correct;
+      document.getElementById('hScoreVal').textContent=state.score;
+    } else {
+      state.wrong++;state.streak=0;
+      btns[idx].classList.add('wrong');
+      btns[state.correctIdx].classList.add('correct');
+      Battle.miss(); SFX.wrong();
+      fb.style.color='var(--red)';
+      fb.textContent='✗ FALSCH! = '+state.answers[state.correctIdx];
+      spawnPop('✗','var(--red)');
+      document.getElementById('hStreak').textContent='0🔥';
+    }
+    setTimeout(nextQ,1400);
   }
-  setTimeout(nextQ,1400);
 }
 
 function nextQ(){
   state.qIdx++;
-  if(state.qIdx>=TOTAL){endGame();return}
+  const total=state.bossMode?BOSS_ROUNDS:TOTAL;
+  if(state.qIdx>=total){
+    if(state.bossMode){ endBoss(); } else { endGame(); }
+    return;
+  }
   loadQ();
 }
 
-function quitGame(){clearInterval(state.timerInt);state.active=false;Battle.stop();showHome()}
+function quitGame(){
+  clearInterval(state.timerInt);
+  state.active=false;
+  Battle.stop();
+  if(state.bossMode) resetBossStyling();
+  showHome();
+}
 
 /* ══════════════════════════════════════
    EFFECTS
@@ -2218,7 +2257,8 @@ function endGame(){
 function playAgain(){
   const sc=document.getElementById('summaryCanvas');
   if(sc&&sc._animId){ cancelAnimationFrame(sc._animId); sc._animId=null; }
-  Object.assign(state,{qIdx:0,score:0,correct:0,wrong:0,streak:0,bestStreak:0,active:true});
+  resetBossStyling();
+  Object.assign(state,{qIdx:0,score:0,correct:0,wrong:0,streak:0,bestStreak:0,active:true,bossMode:false,klasse:state.klasse,diff:state.diff});
   resetUsedQ();
   show('gameScreen');
   setTimeout(()=>Battle.init(),50);
@@ -2393,13 +2433,9 @@ function renderShipSelector(){
 
 
 // ══════════════════════════════════════
-// ENDBOSS-MODUS
+// ENDBOSS-MODUS — läuft auf gameScreen
 // ══════════════════════════════════════
 var BOSS_ROUNDS = 10;
-var BOSS_TIMER_NORMAL = 15;
-var BOSS_TIMER_FAST   = 10;
-
-var bossState = {round:0,score:0,hp:10,maxHP:10,correct:0,timerInt:null,timerSecs:15,active:false};
 
 function isBossUnlocked(){ var s=getShipState(); return s.unlocked.includes(2)||getBossWin(); }
 
@@ -2412,300 +2448,95 @@ function updateBossButton(){
     if(info) info.textContent=getBossWin()?'★ BEREITS BESIEGT':'⚔ BEREIT!';
   } else {
     btn.classList.add('locked-boss');
-    var need=3-getPerfectCount();
     if(info) info.textContent='🔒 ZUERST INFERNO-SCHIFF FREISPIELEN';
   }
 }
 
-function handleBoss(){ if(isBossUnlocked()) showBossIntro(); }
-
-function showBossIntro(){
-  var el=document.getElementById('bossIntro');
-  if(el) el.classList.add('active');
-}
-function bossIntroStart(){
-  var el=document.getElementById('bossIntro');
-  if(el) el.classList.remove('active');
-  startBoss();
+function handleBoss(){
+  if(!isBossUnlocked()) return;
+  var el=document.getElementById('bossIntroModal');
+  if(el) el.style.display='flex';
 }
 
 function startBoss(){
-  clearInterval(bossState.timerInt);
-  bossState={round:0,score:0,hp:10,maxHP:10,correct:0,timerInt:null,timerSecs:15,active:true};
-  resetUsedQ();
-  var bs=document.getElementById('bossScreen');
-  bs.style.position='relative';
-  var old=bs.querySelector('.boss-overlay');
-  if(old) old.remove();
-  show('bossScreen');
-  startBossCanvas();
-  setTimeout(function(){ nextBossRound(); }, 100);
-}
-
-function startBossCanvas(){
-  var cv=document.getElementById('bossCanvas');
-  if(!cv) return;
-  var rect=cv.parentElement.getBoundingClientRect();
-  cv.width=rect.width||400; cv.height=rect.height||120;
-  if(cv._animId) cancelAnimationFrame(cv._animId);
-  var ctx=cv.getContext('2d');
-  var W=cv.width, H=cv.height;
-  var frame=0;
-  function draw(){
-    ctx.clearRect(0,0,W,H);
-    // Starfield
-    ctx.fillStyle='#000820'; ctx.fillRect(0,0,W,H);
-    if(frame%3===0){
-      ctx.fillStyle='rgba(255,255,255,0.6)';
-      for(var i=0;i<3;i++) ctx.fillRect(Math.random()*W,Math.random()*(H-30),1,1);
-    }
-    // Boss sprite — big enemy, center-top
-    var hp=bossState.hp, maxHP=bossState.maxHP;
-    var hpPct=hp/maxHP;
-    var bounce=Math.sin(frame*0.08)*4;
-    var ex=W/2, ey=38+bounce;
-    ctx.save(); ctx.translate(ex,ey);
-    // Glow color based on HP
-    var col=hpPct>0.6?'#FF00AA':hpPct>0.3?'#FF6600':'#FF0000';
-    ctx.shadowColor=col; ctx.shadowBlur=16;
-    ctx.fillStyle=col;
-    // Body
-    ctx.fillRect(-18,-10,36,22);
-    // Wings
-    ctx.fillRect(-34,-4,16,14);
-    ctx.fillRect(18,-4,16,14);
-    // Thrusters
-    ctx.fillRect(-22,10,8,8); ctx.fillRect(14,10,8,8);
-    ctx.fillStyle='rgba(0,0,0,0.5)';
-    ctx.fillRect(-4,10,8,12);
-    // Eyes
-    ctx.shadowBlur=0;
-    ctx.fillStyle='#FF4444';
-    ctx.fillRect(-8,-6,6,6); ctx.fillRect(2,-6,6,6);
-    // Thruster fire
-    var fireH=6+Math.sin(frame*0.3)*3;
-    ctx.fillStyle='#FF6600'; ctx.shadowColor='#FF6600'; ctx.shadowBlur=8;
-    ctx.fillRect(-20,18,6,fireH); ctx.fillRect(14,18,6,fireH);
-    ctx.fillStyle='#FFE600';
-    ctx.fillRect(-19,18,4,fireH*0.6); ctx.fillRect(15,18,4,fireH*0.6);
-    ctx.restore();
-    ctx.shadowBlur=0;
-    frame++;
-    cv._animId=requestAnimationFrame(draw);
-  }
-  draw();
-}
-
-function stopBossCanvas(){
-  var cv=document.getElementById('bossCanvas');
-  if(cv&&cv._animId){ cancelAnimationFrame(cv._animId); cv._animId=null; }
-}
-
-// Globaler Handler für onclick="bossAnswer(i)" in den festen Buttons
-var _bossClickHandler=null;
-function bossAnswer(i){
-  if(_bossClickHandler) _bossClickHandler(i);
-}
-
-function nextBossRound(){
-  try {
-  if(bossState.round>=BOSS_ROUNDS){ endBoss(); return; }
-  bossState.round++;
-  bossState.timerSecs = bossState.round>=(BOSS_ROUNDS-2) ? BOSS_TIMER_FAST : BOSS_TIMER_NORMAL;
-  document.getElementById('bossRoundInfo').textContent='RUNDE '+bossState.round+'/'+BOSS_ROUNDS;
-  document.getElementById('bossScore').textContent=bossState.score+' PK';
-  updateBossHP();
-  var _pf=document.getElementById('bossProgFill');
-  var _pl=document.getElementById('bossProgLbl');
-  if(_pf) _pf.style.width=Math.round((bossState.round-1)/BOSS_ROUNDS*100)+'%';
-  if(_pl) _pl.textContent=(bossState.round-1)+' / '+BOSS_ROUNDS;
-  var q=genBossQ();
-  var bossEqEl=document.getElementById('bossEquation');
-  bossEqEl.textContent=q.txt;
-  bossEqEl.classList.remove('q-small','q-tiny');
-  if(q.txt.length>18){ bossEqEl.classList.add('q-tiny'); }
-  else if(q.txt.length>12||/\d{3}/.test(q.txt)){ bossEqEl.classList.add('q-small'); }
-  var correct=q.res;
-  var wrongs=makeBossWrongs(correct);
-  var w3=correct+1; var att=0; while((w3===correct||w3===wrongs[0]||w3===wrongs[1])&&att<50){var sp=Math.max(5,Math.floor(correct*0.25));w3=correct+(Math.random()<0.5?1:-1)*(Math.floor(Math.random()*sp)+1);att++;}
-  var answers=[correct,wrongs[0],wrongs[1],w3];
-  answers.sort(function(){return Math.random()-0.5;});
-
-  // Verwende die festen Buttons — genau wie im normalen Spiel
-  var btns=[
-    document.getElementById('bossBtn0'),
-    document.getElementById('bossBtn1'),
-    document.getElementById('bossBtn2'),
-    document.getElementById('bossBtn3')
-  ];
-  var shotsLeft=3, done=false;
-  btns.forEach(function(btn,i){
-    btn.textContent=String(answers[i]);
-    btn.className='ans-btn';
-    btn.disabled=false;
-    btn.style.cssText='';
-    btn.setAttribute('data-l',['A','B','C','D'][i]);
+  var el=document.getElementById('bossIntroModal');
+  if(el) el.style.display='none';
+  var nameVal=document.getElementById('nameInput').value;
+  var nameCheck=validateName(nameVal);
+  state.playerName=nameCheck.ok?nameCheck.name:'HELD';
+  Object.assign(state,{
+    qIdx:0,score:0,correct:0,wrong:0,streak:0,bestStreak:0,
+    active:true,bossMode:true,bossHP:10,bossMaxHP:10,
+    klasse:4,diff:'hard'
   });
-  _bossClickHandler=function(i){
-    var btn=btns[i]; var ans=answers[i];
-    if(done||btn.disabled) return;
-    SFX.laser();
-    if(ans===correct){
-      btn.disabled=true; btn.className='ans-btn wrong';
-      document.getElementById('bossFeedback').style.color='#FF4400';
-      document.getElementById('bossFeedback').textContent='✗ DAS WAR RICHTIG! BOSS HEILT SICH!';
-      bossState.hp=Math.min(bossState.maxHP,bossState.hp+1);
-      done=true; clearInterval(bossState.timerInt); SFX.wrong();
-      updateBossHP();
-      btns.forEach(function(b,j){ if(answers[j]===correct) b.className='ans-btn correct'; });
-      setTimeout(nextBossRound,1800);
-    } else {
-      btn.disabled=true; btn.className='ans-btn wrong';
-      shotsLeft--;
-      if(shotsLeft<=0){
-        done=true; clearInterval(bossState.timerInt);
-        bossState.hp--; var tb=bossState.timerSecs*5;
-        bossState.score+=100+tb; bossState.correct++;
-        document.getElementById('bossFeedback').style.color='#00FF66';
-        document.getElementById('bossFeedback').textContent='✓ TREFFER! +'+(100+tb)+' PK';
-        document.getElementById('bossScore').textContent=bossState.score+' PK';
-        updateBossHP(); SFX.correct();
-        btns.forEach(function(b,j){ if(answers[j]===correct) b.className='ans-btn correct'; });
-        setTimeout(nextBossRound,1500);
-      } else {
-        SFX.hit();
-        document.getElementById('bossFeedback').style.color='#FFFF00';
-        document.getElementById('bossFeedback').textContent='💥 ABGESCHOSSEN! NOCH '+(shotsLeft===2?'2':'1')+' FALSCHE TREFFEN!';
-      }
-    }
-  };
-  document.getElementById('bossFeedback').style.color='#FF4400';
-  document.getElementById('bossFeedback').textContent='';
-  startBossTimer();
-  } catch(e){ console.error('Boss error:', e); }
+  resetUsedQ();
+  var gs=document.getElementById('gameScreen');
+  gs.style.background='rgba(40,0,0,0.95)';
+  gs.querySelector('.game-hdr-title').textContent='⚔ ENDBOSS';
+  gs.querySelector('.game-hdr-title').style.color='#FF4400';
+  document.getElementById('qBadge').textContent='⚠ SCHIESSE DIE FALSCHEN AB!';
+  document.getElementById('qBadge').style.color='#FF4400';
+  updateBossHUD();
+  show('gameScreen');
+  setTimeout(function(){ Battle.init(); }, 50);
+  loadQ();
 }
 
-
-function startBossTimer(){
-  clearInterval(bossState.timerInt);
-  var total=bossState.timerSecs, elapsed=0;
-  var bar=document.getElementById('bossTimerFill');
-  var txt=document.getElementById('bossTimerText');
-  bar.style.width='100%'; bar.style.background='#FF4400';
-  txt.textContent=total;
-  bossState.timerInt=setInterval(function(){
-    elapsed+=0.1;
-    var pct=Math.max(0,((total-elapsed)/total)*100);
-    bar.style.width=pct+'%';
-    txt.textContent=Math.ceil(total-elapsed);
-    if(total-elapsed<=5) bar.style.background='#FF0000';
-    if(elapsed>=total){
-      clearInterval(bossState.timerInt);
-      _bossClickHandler=null;
-      document.getElementById('bossFeedback').style.color='#FF4400';
-      document.getElementById('bossFeedback').textContent='⌛ ZEIT! BOSS GREIFT AN!';
-      bossState.hp=Math.min(bossState.maxHP,bossState.hp+1);
-      updateBossHP(); SFX.wrong();
-      setTimeout(nextBossRound,1500);
-    }
-  },100);
-}
-
-function updateBossHP(){
-  var hp=bossState.hp, max=bossState.maxHP;
-  var pct=Math.max(0,Math.round(hp/max*100));
-  var bar=document.getElementById('bossHPBar');
-  var val=document.getElementById('bossHPVal');
-  var tr=document.getElementById('bossTreffer');
-  if(bar) bar.style.width=pct+'%';
-  if(val){ val.textContent=hp; val.style.color=hp<=3?'#FF0000':hp<=6?'#FF8800':'#FF4400'; }
-  if(tr) tr.textContent=bossState.correct;
-}
-
-function genBossQ(){
-  return makeUniqueQ(function(){
-    var ops=['+','-','x',':'];
-    var op=ops[rnd(0,ops.length-1)];
-    var a,b,res,txt;
-    if(op==='+'){a=rnd(20,200);b=rnd(10,200);res=a+b;txt=a+' + '+b;}
-    else if(op==='-'){a=rnd(200,999);b=rnd(10,a-10);res=a-b;txt=a+' - '+b;}
-    else if(op==='x'){a=rnd(3,9);b=rnd(11,99);res=a*b;txt=a+' x '+b;}
-    else{b=rnd(2,9);res=rnd(10,50);a=b*res;txt=a+' : '+b;}
-    return{txt:txt+' =',res:res};
-  }, 50);
-}
-
-function makeBossWrongs(correct){
-  var wrongs=[],att=0;
-  while(wrongs.length<2&&att<100){
-    att++;
-    var spread=Math.max(5,Math.floor(correct*0.2));
-    var w=correct+(Math.random()<0.5?1:-1)*rnd(1,spread);
-    if(w>0&&w!==correct&&!wrongs.includes(w)) wrongs.push(w);
-  }
-  return wrongs;
+function updateBossHUD(){
+  document.getElementById('hQNum').textContent=(state.qIdx+1)+'/'+BOSS_ROUNDS;
+  var hp=state.bossHP||10;
+  document.getElementById('hStreak').textContent=hp+' ❤️';
+  document.getElementById('hStreak').style.color=hp<=3?'#FF0000':hp<=6?'#FF8800':'#FF4400';
+  document.getElementById('progFill').style.background='#FF4400';
 }
 
 function endBoss(){
-  bossState.active=false; clearInterval(bossState.timerInt); stopBossCanvas();
-  var won=bossState.hp<=0;
+  var won=(state.bossHP||0)<=0;
+  state.active=false; state.bossMode=false;
+  clearInterval(state.timerInt);
   if(won){
     setBossWin(); checkShipUnlocks(); SFX.victory();
-    // Name für Ahnentafel — eigener Name oder abfragen
-    var ahnName = (state.playerName && state.playerName !== 'SPIELER1') ? state.playerName : null;
-    if(!ahnName){
-      var eingabe = '';
-      var versuche = 0;
-      while(versuche < 3){
-        eingabe = window.prompt('⚔ ENDBOSS BESIEGT!\nName für die Ahnentafel (max. 12 Zeichen):') || '';
-        eingabe = eingabe.trim().toUpperCase().slice(0,12);
-        if(!eingabe){ ahnName = 'HELD'; break; }
-        var nc = validateName(eingabe);
-        if(nc.ok){ ahnName = nc.name; break; }
-        window.alert('❌ ' + nc.msg + ' — bitte anderen Namen wählen.');
-        versuche++;
-      }
-      if(!ahnName) ahnName = 'HELD';
-    }
-    // Direkt speichern (async — fire and forget mit explizitem await-Wrapper)
-    (async function(){ 
-      try { await saveAhnentafelEntry(ahnName, bossState.score, bossState.correct, BOSS_ROUNDS); }
-      catch(e){ console.error('Ahnentafel save error:', e); }
+    var ahnName=state.playerName||'HELD';
+    (async function(){
+      try{ await saveAhnentafelEntry(ahnName,state.score,state.correct,BOSS_ROUNDS); }
+      catch(e){ console.error('Ahnentafel:',e); }
     })();
-  }
-  else { SFX.gameOver(); }
-  addTotalScore(bossState.score);
-  var s=getShipState();
-
-  // Show result overlay inside boss screen
-  var overlay=document.createElement('div');
-  overlay.className='boss-overlay';
-  overlay.style.cssText='position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(0,8,32,0.95);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:100;';
-  
-  var title=document.createElement('div');
-  title.style.cssText="font-family:'Press Start 2P',monospace;font-size:18px;text-align:center;margin-bottom:20px;line-height:1.8;";
-  title.style.color=won?'#00FF66':'#FF4400';
-  title.textContent=won?'⚔ ENDBOSS BESIEGT!':'💀 NIEDERLAGE!';
-  
-  var info=document.createElement('div');
-  info.style.cssText="font-family:'Press Start 2P',monospace;font-size:9px;color:#FFD700;text-align:center;line-height:2.2;margin-bottom:20px;";
-  info.innerHTML='TREFFER: '+bossState.correct+'/'+BOSS_ROUNDS+'<br>PUNKTE: +'+bossState.score+(won&&s.unlocked.includes(4)?'<br><span style="color:#FFD700">★ LEGEND-SCHIFF FREI!</span>':'');
-
-  var btn=document.createElement('button');
-  btn.style.cssText='font-family:monospace;font-size:10px;padding:12px 24px;background:transparent;border:2px solid '+(won?'#00FF66':'#FF4400')+';color:'+(won?'#00FF66':'#FF4400')+';cursor:pointer;';
-  btn.textContent=won?'▶ WEITER':'↩ NOCHMAL?';
-  btn.onclick=function(){ if(won){ showHome(); } else { var old2=document.getElementById('bossScreen').querySelector('.boss-overlay'); if(old2) old2.remove(); bossIntroStart(); } };
-
-  overlay.appendChild(title);
-  overlay.appendChild(info);
-  overlay.appendChild(btn);
-  
-  var bs=document.getElementById('bossScreen');
-  bs.style.position='relative';
-  bs.appendChild(overlay);
+  } else { SFX.gameOver(); }
+  addTotalScore(state.score);
+  Battle.finish(state.correct);
+  resetBossStyling();
+  var pct=state.correct/BOSS_ROUNDS;
+  var rank,emoji,title,sub;
+  if(won){rank='S';emoji='⚔';title='ENDBOSS BESIEGT!';sub='Du bist eine Mathe-Legende!';}
+  else if(pct>=0.6){rank='A';emoji='💪';title='GUTER KAMPF!';sub='Fast geschafft — nochmal!';}
+  else{rank='D';emoji='💀';title='NIEDERLAGE!';sub='Der Boss lacht dich aus!';}
+  document.getElementById('endEmoji').textContent=emoji;
+  document.getElementById('endTitle').textContent=title;
+  document.getElementById('endSub').textContent=sub;
+  var rb=document.getElementById('rankBox');
+  rb.textContent='★ RANG '+rank+' ★'; rb.className='rank-box rank-'+rank;
+  document.getElementById('rCorrect').textContent=state.correct+'/'+BOSS_ROUNDS;
+  document.getElementById('rWrong').textContent=state.wrong;
+  document.getElementById('rScore').textContent=state.score;
+  document.getElementById('rStreak').textContent=state.bestStreak+'🔥';
+  setTimeout(function(){
+    show('endScreen');
+    Battle.stop();
+    setTimeout(function(){ Battle.drawSummary(state.correct); },100);
+  }, won?2200:600);
 }
 
-function quitBoss(){ clearInterval(bossState.timerInt); bossState.active=false; stopBossCanvas(); showHome(); }
+function resetBossStyling(){
+  var gs=document.getElementById('gameScreen');
+  gs.style.background='';
+  var t=gs.querySelector('.game-hdr-title');
+  t.textContent='◆ MATHE BLAST'; t.style.color='';
+  document.getElementById('qBadge').textContent='';
+  document.getElementById('qBadge').style.color='';
+  document.getElementById('hStreak').style.color='';
+  document.getElementById('progFill').style.background='';
+  state.bossMode=false;
+}
 
 
 function showShipReq(ship){
@@ -3021,86 +2852,20 @@ function validateName(name) {
 </div>
 
 
-<!-- ════════ ENDBOSS SCREEN ════════ -->
-  <div class="screen" id="bossScreen">
-
-    <div class="game-hdr">
-      <span class="game-hdr-title" style="color:#FF4400;">⚔ ENDBOSS</span>
-      <button class="btn-quit" onclick="quitBoss()">✕ QUIT</button>
-    </div>
-
-    <div class="hud-row">
-      <div class="hud-box">
-        <div class="hud-lbl">PUNKTE</div>
-        <div class="hud-val ny" id="bossScore">0 PK</div>
-      </div>
-      <div class="hud-box">
-        <div class="hud-lbl">RUNDE</div>
-        <div class="hud-val nc" id="bossRoundInfo">1/10</div>
-      </div>
-      <div class="hud-box">
-        <div class="hud-lbl">TREFFER</div>
-        <div class="hud-val ng" id="bossTreffer">0</div>
-      </div>
-      <div class="hud-box">
-        <div class="hud-lbl">BOSS HP</div>
-        <div class="hud-val" id="bossHPVal" style="color:#FF4400;">10</div>
-      </div>
-    </div>
-
-    <div class="timer-wrap">
-      <div class="timer-track">
-        <div class="timer-fill" id="bossTimerFill" style="background:#FF4400;"></div>
-      </div>
-      <span class="timer-secs" id="bossTimerText">15</span>
-    </div>
-
-    <div class="battle-arena" style="background:linear-gradient(180deg,#1a0000 0%,#050010 100%);">
-      <canvas id="bossCanvas" style="position:absolute;top:0;left:0;width:100%;height:100%;image-rendering:pixelated;"></canvas>
-      <div style="position:absolute;bottom:0;left:0;right:0;">
-        <div style="width:100%;height:8px;background:#1a0000;border-top:1px solid #FF4400;">
-          <div id="bossHPBar" style="height:100%;background:#FF4400;width:100%;transition:width .3s;"></div>
-        </div>
-        <div id="bossFeedback" style="font-family:'Press Start 2P',monospace;font-size:8px;text-align:center;padding:3px 4px;color:#FF4400;min-height:20px;"></div>
-      </div>
-    </div>
-
-    <div class="q-area panel panel-cyan" style="border-color:rgba(255,68,0,0.3);">
-      <span class="q-badge" style="color:#FF4400;">⚠ SCHIESSE DIE FALSCHEN AB!</span>
-      <div class="q-text" id="bossEquation">? = ?</div>
-    </div>
-
-    <div class="answers" id="bossAnswers">
-      <button class="ans-btn" data-l="A" id="bossBtn0" onclick="bossAnswer(0)"></button>
-      <button class="ans-btn" data-l="B" id="bossBtn1" onclick="bossAnswer(1)"></button>
-      <button class="ans-btn" data-l="C" id="bossBtn2" onclick="bossAnswer(2)"></button>
-      <button class="ans-btn" data-l="D" id="bossBtn3" onclick="bossAnswer(3)"></button>
-    </div>
-
-    <div class="prog-row">
-      <div class="prog-track">
-        <div class="prog-fill" id="bossProgFill" style="width:0%;background:#FF4400;"></div>
-      </div>
-      <span class="prog-lbl" id="bossProgLbl">0 / 10</span>
-    </div>
-
-  </div>
-
 <!-- BOSS INTRO MODAL -->
-<div id="bossIntro">
-  <div id="bossIntroBox">
+<div id="bossIntroModal">
+  <div id="bossIntroBox2">
     <div class="bi-title">⚔ ENDBOSS-MODUS</div>
     <div class="bi-rule">
-      🎯 SCHIESSE DIE FALSCHEN ANTWORTEN AB!<br>
-      ✅ DIE RICHTIGE ANTWORT STEHEN LASSEN!
+      💥 SCHIESSE DIE FALSCHEN AB!<br>
+      🛑 LASS DIE RICHTIGE STEHEN!
     </div>
     <div class="bi-sub">
-      Du hast 3 Schüsse pro Runde.<br>
-      Triffst du die richtige Antwort → Boss-Treffer!<br>
-      Eliminiere alle falschen → Du triffst den Boss!<br>
-      10 Runden · Timer läuft · Viel Erfolg!
+      Klasse 4 · Schwer · 10 Fragen<br>
+      Falsch geklickt → Boss heilt sich<br>
+      Richtige stehen lassen → Du triffst den Boss!
     </div>
-    <button class="bi-btn" onclick="bossIntroStart()">▶ LOS GEHTS!</button>
+    <button class="bi-btn" onclick="startBoss()">▶ KAMPF BEGINNEN!</button>
   </div>
 </div>
 
