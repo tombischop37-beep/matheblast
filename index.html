@@ -2042,7 +2042,14 @@ function loadQ(){
 
 function startTimer(){
   clearInterval(state.timerInt);
-  state.timerSecs=DIFF_TIME[state.diff];
+  if(state.bossMode){
+    // Startzeit 10s. 1 Fehler → -1s (9s). 2+ Fehler → max 8s.
+    const mistakes=state.bossMistakes||0;
+    const base=mistakes===0?10:mistakes===1?9:8;
+    state.timerSecs=base;
+  } else {
+    state.timerSecs=DIFF_TIME[state.diff];
+  }
   updateTimer();
   state.timerInt=setInterval(()=>{
     state.timerSecs--;
@@ -2072,11 +2079,14 @@ function timeout(){
   if(state.bossMode){
     // Zeit abgelaufen im Boss — Boss-HP steigt
     state.bossHP=Math.min(state.bossMaxHP,(state.bossHP||10)+1);
+    state.bossMistakes=(state.bossMistakes||0)+1;
     state.wrong++;
     Battle.miss(); SFX.wrong();
     const fb=document.getElementById('feedback');
     fb.style.color='var(--red)';
-    fb.textContent='⌛ ZEIT! BOSS HEILT SICH! = '+state.answers[state.correctIdx];
+    const mistakes=state.bossMistakes||0;
+    const nextTime=mistakes===0?10:mistakes===1?9:8;
+    fb.textContent='⌛ ZEIT! BOSS HEILT SICH! → NUR NOCH '+nextTime+'s!';
     const btns=document.querySelectorAll('#answersGrid .ans-btn');
     btns.forEach(b=>b.disabled=true);
     btns[state.correctIdx].classList.add('correct');
@@ -2118,10 +2128,13 @@ function answer(idx){
       btns.forEach(b=>b.disabled=true);
       btns[idx].classList.add('wrong');
       state.bossHP=Math.min(state.bossMaxHP,(state.bossHP||10)+1);
+      state.bossMistakes=(state.bossMistakes||0)+1;
       state.wrong++;
       Battle.miss(); SFX.wrong();
       fb.style.color='var(--red)';
-      fb.textContent='✗ DAS WAR RICHTIG! BOSS HEILT SICH!';
+      const mistakes2=state.bossMistakes||0;
+      const nextTime=mistakes2===0?10:mistakes2===1?9:8;
+      fb.textContent='✗ DAS WAR RICHTIG! BOSS HEILT SICH! → NUR NOCH '+nextTime+'s!';
       spawnPop('✗','var(--red)');
       updateBossHUD();
       setTimeout(nextQ,1500);
@@ -2492,7 +2505,8 @@ function startBoss(){
   state.playerName=nameCheck.ok?nameCheck.name:'HELD';
   Object.assign(state,{
     qIdx:0,score:0,correct:0,wrong:0,streak:0,bestStreak:0,
-    active:true,bossMode:true,bossHP:10,bossMaxHP:10,
+    active:true,bossMode:true,bossHP:10,bossMaxHP:10,bossMistakes:0,
+    bossMistakes:0,
     klasse:4,diff:'hard'
   });
   resetUsedQ();
