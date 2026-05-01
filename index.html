@@ -677,7 +677,28 @@ body::after{
 .btn-boss.locked-boss{opacity:0.8;cursor:not-allowed;border-color:#FF4400;color:#FF4400;background:transparent !important;}
 .btn-boss .boss-lock-info{font-size:7px;opacity:0.7;display:block;margin-top:4px;}
 /* ENDBOSS SCREEN */
-#bossScreen{background:#000820 !important;padding:12px !important;gap:10px;align-items:stretch !important;width:100% !important;max-width:430px !important;box-sizing:border-box;margin:0 auto !important;}
+#bossScreen{background:#000820 !important;padding:12px;gap:10px;}
+/* Boss-intro Modal */
+#bossIntro{
+  display:none;position:fixed;inset:0;z-index:10000;
+  background:rgba(0,0,0,0.85);
+  align-items:center;justify-content:center;
+}
+#bossIntro.active{display:flex;}
+#bossIntroBox{
+  background:#000820;border:2px solid #FF4400;
+  padding:24px 20px;max-width:360px;width:90%;
+  font-family:'Press Start 2P',monospace;text-align:center;
+}
+#bossIntroBox .bi-title{font-size:13px;color:#FF4400;text-shadow:0 0 12px #FF4400;margin-bottom:18px;line-height:1.6;}
+#bossIntroBox .bi-rule{font-size:8px;color:#FFD700;line-height:2.2;margin-bottom:18px;}
+#bossIntroBox .bi-sub{font-size:7px;color:rgba(255,255,255,0.5);line-height:2;margin-bottom:22px;}
+#bossIntroBox .bi-btn{
+  font-family:'Press Start 2P',monospace;font-size:9px;
+  background:transparent;border:2px solid #FF4400;color:#FF4400;
+  padding:12px 24px;cursor:pointer;letter-spacing:1px;
+  -webkit-appearance:none;appearance:none;
+}
 .boss-hud{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;border-bottom:1px solid #FF4400;width:100%;box-sizing:border-box;}
 .boss-eq{font-family:'Press Start 2P',monospace;font-size:clamp(20px,5vw,32px);color:#FFD700;text-align:center;
   text-shadow:0 0 20px #FFD700;padding:40px 0 16px;width:100%;box-sizing:border-box;}
@@ -736,7 +757,7 @@ body::after{
 
 
 /* ── BOSS SCREEN SPEZIFISCH ── */
-#bossScreen .battle-arena{height:60px;}
+#bossScreen .battle-arena{height:52px;margin:0;}
 </style>
 </head>
 <body>
@@ -2289,7 +2310,17 @@ function updateBossButton(){
   }
 }
 
-function handleBoss(){ if(isBossUnlocked()) startBoss(); }
+function handleBoss(){ if(isBossUnlocked()) showBossIntro(); }
+
+function showBossIntro(){
+  var el=document.getElementById('bossIntro');
+  if(el) el.classList.add('active');
+}
+function bossIntroStart(){
+  var el=document.getElementById('bossIntro');
+  if(el) el.classList.remove('active');
+  startBoss();
+}
 
 function startBoss(){
   clearInterval(bossState.timerInt);
@@ -2850,7 +2881,7 @@ function validateName(name) {
       <div id="bossFeedback" style="font-family:'Press Start 2P',monospace;font-size:9px;text-align:center;padding:4px;min-height:16px;color:#FF4400;"></div>
     </div>
 
-    <div class="q-area panel panel-cyan" style="border-color:rgba(255,68,0,0.3);"><!-- flex:1 von .q-area -->
+    <div class="q-area panel panel-cyan" style="border-color:rgba(255,68,0,0.3);flex:0 0 auto;min-height:110px;">
       <span class="q-badge" style="color:#FF4400;">⚠ SCHIESSE DIE FALSCHEN AB!</span>
       <div class="q-text" id="bossEquation">? = ?</div>
     </div>
@@ -2866,6 +2897,24 @@ function validateName(name) {
     </div>
 
   </div>
+
+<!-- BOSS INTRO MODAL -->
+<div id="bossIntro">
+  <div id="bossIntroBox">
+    <div class="bi-title">⚔ ENDBOSS-MODUS</div>
+    <div class="bi-rule">
+      🎯 SCHIESSE DIE FALSCHEN ANTWORTEN AB!<br>
+      ✅ DIE RICHTIGE ANTWORT STEHEN LASSEN!
+    </div>
+    <div class="bi-sub">
+      Du hast 3 Schüsse pro Runde.<br>
+      Triffst du die richtige Antwort → Boss-Treffer!<br>
+      Eliminiere alle falschen → Du triffst den Boss!<br>
+      10 Runden · Timer läuft · Viel Erfolg!
+    </div>
+    <button class="bi-btn" onclick="bossIntroStart()">▶ LOS GEHTS!</button>
+  </div>
+</div>
 
 <!-- SCHIFF-REQ POPUP -->
 <div id="shipReqOverlay" onclick="closeShipReq()"></div>
