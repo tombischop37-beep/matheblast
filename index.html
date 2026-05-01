@@ -702,16 +702,21 @@ body::after{
 .boss-hud{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;border-bottom:1px solid #FF4400;width:100%;box-sizing:border-box;}
 .boss-eq{font-family:'Press Start 2P',monospace;font-size:clamp(20px,5vw,32px);color:#FFD700;text-align:center;
   text-shadow:0 0 20px #FFD700;padding:40px 0 16px;width:100%;box-sizing:border-box;}
-.boss-answers{display:flex;flex-direction:row;gap:10px;justify-content:center;flex-wrap:wrap;padding:16px 12px;width:100%;box-sizing:border-box;}
+.boss-answers{
+  display:grid;grid-template-columns:1fr 1fr;gap:10px;
+  width:100%;box-sizing:border-box;
+}
 .boss-ans-btn{
-  width:100px;height:70px;
-  font-family:'Press Start 2P',monospace;font-size:clamp(16px,4vw,24px);
-  background:#050010 !important;border:2px solid #FF00AA;color:#FF00AA;
+  width:100%;
+  padding:clamp(14px,4vw,20px) 8px;
+  font-family:'Press Start 2P',monospace;font-size:clamp(16px,5vw,26px);
+  background:#050010;border:2px solid #FF00AA;color:#FF00AA;
   cursor:pointer;transition:all .15s;
   -webkit-appearance:none;appearance:none;
+  touch-action:manipulation;
 }
-.boss-ans-btn:hover{transform:scale(1.05);box-shadow:0 0 15px rgba(255,0,170,0.4);}
-.boss-ans-btn.shot{border-color:#FF4400 !important;color:#FF4400 !important;background:#1a0000 !important;}
+.boss-ans-btn:active{transform:scale(0.96);}
+.boss-ans-btn.shot{border-color:#FF4400 !important;color:#FF4400 !important;background:#1a0000 !important;opacity:0.5;}
 .boss-ans-btn.correct-ans{border-color:#00FF66 !important;color:#00FF66 !important;}
 .boss-timer-bar{height:6px;background:#FF4400;transition:width .1s linear;margin:0 12px;}
 .boss-progress{font-family:'Press Start 2P',monospace;font-size:8px;color:rgba(255,255,255,0.5);text-align:center;padding:4px;}
@@ -2360,14 +2365,14 @@ function nextBossRound(){
   answers.forEach(function(ans){
     var btn=document.createElement('button');
     btn.type='button';
-    btn.className='ans-btn';
-    btn.setAttribute('style','border-color:#FF00AA;color:#FF00AA;-webkit-appearance:none;appearance:none;');
+    btn.className='boss-ans-btn';
+    btn.setAttribute('data-l','');
     btn.textContent=ans;
     btn.onclick=function(){
-      if(done||btn.classList.contains('shot')) return;
+      if(done||btn.dataset.shot) return;
       SFX.laser();
       if(ans===correct){
-        btn.classList.add('shot'); btn.textContent='✗ '+ans;
+        btn.dataset.shot='1'; btn.classList.add('shot'); btn.textContent='✗ '+ans;
         document.getElementById('bossFeedback').style.color='#FF4400';
         document.getElementById('bossFeedback').textContent='✗ DAS WAR RICHTIG! TREFFER FÜR BOSS!';
         bossState.hp=Math.min(bossState.maxHP,bossState.hp+1);
@@ -2375,7 +2380,7 @@ function nextBossRound(){
         highlightCorrectBoss(container,correct);
         setTimeout(nextBossRound,1800);
       } else {
-        btn.classList.add('shot'); btn.textContent='✗ '+ans;
+        btn.dataset.shot='1'; btn.classList.add('shot'); btn.textContent='✗ '+ans;
         shotsLeft--; SFX.hit();
         if(shotsLeft<=0){
           done=true; clearInterval(bossState.timerInt);
@@ -2401,7 +2406,7 @@ function nextBossRound(){
 }
 
 function highlightCorrectBoss(container,correct){
-  container.querySelectorAll('.ans-btn').forEach(function(b){
+  container.querySelectorAll('.boss-ans-btn').forEach(function(b){
     if(Number(b.textContent)===correct||b.textContent==String(correct)) b.classList.add('correct-ans');
   });
 }
@@ -2881,12 +2886,12 @@ function validateName(name) {
       <div id="bossFeedback" style="font-family:'Press Start 2P',monospace;font-size:9px;text-align:center;padding:4px;min-height:16px;color:#FF4400;"></div>
     </div>
 
-    <div class="q-area panel panel-cyan" style="border-color:rgba(255,68,0,0.3);flex:0 0 auto;min-height:110px;">
+    <div class="panel panel-cyan" style="border-color:rgba(255,68,0,0.3);padding:10px 12px;flex:0 0 auto;">
       <span class="q-badge" style="color:#FF4400;">⚠ SCHIESSE DIE FALSCHEN AB!</span>
       <div class="q-text" id="bossEquation">? = ?</div>
     </div>
 
-    <div class="answers" id="bossAnswers">
+    <div class="boss-answers" id="bossAnswers">
     </div>
 
     <div class="prog-row">
