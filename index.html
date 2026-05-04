@@ -786,7 +786,7 @@ body::after{
     <div id="shipSelector"></div>
     <div class="ship-req" id="shipReqText"></div>
     <button class="btn-play" onclick="startGame()">▶ SPIELEN</button>
-    <button class="btn-hs" onclick="showAhnentafel()">⚔ AHNENTAFEL</button>
+    <button class="btn-hs" onclick="showAhnentafel()">🏆 HIGHSCORES</button>
     <button class="btn-boss locked-boss" id="bossBtn" onclick="handleBoss()">⚔ ENDBOSS-MODUS<span class="boss-lock-info" id="bossLockInfo">🔒 3x PERFEKTE RUNDE NÖTIG</span></button>
 
     <div style="margin-top:16px;text-align:center;font-family:'Press Start 2P',monospace;font-size:6px;color:rgba(255,255,255,0.25);line-height:2.5;">
@@ -857,8 +857,8 @@ body::after{
 
   <!-- ════════ HIGHSCORE SCREEN ════════ -->
   <div class="screen" id="hsScreen">
-    <div class="hs-title nc" style="color:#FFD700;font-size:14px;margin-bottom:4px;">⚔ AHNENTAFEL ⚔</div>
-    <div style="font-family:'Press Start 2P',monospace;font-size:7px;color:rgba(255,255,255,0.4);text-align:center;margin-bottom:12px;">ENDBOSS-BEZWINGER</div>
+    <div class="hs-title nc" style="color:#FFD700;font-size:13px;margin-bottom:2px;">🏆 HIGHSCORES</div>
+    <div style="font-family:'Press Start 2P',monospace;font-size:7px;color:rgba(255,255,255,0.4);text-align:center;margin-bottom:10px;">TOP 100 WELTWEIT</div>
     <div class="hs-list" id="ahnentafelList"></div>
     <button class="btn-back" onclick="showHome()">◀ ZURÜCK</button>
   </div>
@@ -936,6 +936,20 @@ body::after{
     <div class="end-btns">
       <button class="btn-again" onclick="playAgain()">↺ NOCHMAL</button>
       <button class="btn-home" onclick="showHome()">◀ HAUPTMENÜ</button>
+    </div>
+
+    <div id="hsSubmitBox" style="margin-top:12px;text-align:center;">
+      <div style="font-family:'Press Start 2P',monospace;font-size:7px;color:rgba(255,255,255,0.5);margin-bottom:8px;">IN DIE WELTRANGLISTE?</div>
+      <div style="display:flex;gap:8px;justify-content:center;align-items:center;">
+        <input id="hsNameInput" maxlength="12" placeholder="DEIN NAME"
+          style="font-family:'Press Start 2P',monospace;font-size:9px;background:#050010;border:1px solid rgba(255,215,0,0.4);color:#FFD700;padding:8px 10px;width:140px;text-transform:uppercase;"
+          oninput="this.value=this.value.toUpperCase()">
+        <button onclick="submitHighscore()"
+          style="font-family:'Press Start 2P',monospace;font-size:8px;background:transparent;border:2px solid #FFD700;color:#FFD700;padding:8px 12px;cursor:pointer;-webkit-appearance:none;">
+          ✓ EINTRAGEN
+        </button>
+      </div>
+      <div id="hsSubmitFb" style="font-family:'Press Start 2P',monospace;font-size:7px;margin-top:8px;min-height:16px;"></div>
     </div>
   </div>
 
@@ -1504,6 +1518,7 @@ function show(id){
   document.getElementById(id).classList.add('active');
 }
 function showHome(){
+  resetHsSubmit();
   const sc=document.getElementById('summaryCanvas');
   if(sc&&sc._animId){ cancelAnimationFrame(sc._animId); sc._animId=null; }
   clearInterval(state.timerInt);show('homeScreen');renderShipSelector();checkShipUnlocks();updateBossButton();
@@ -2293,16 +2308,40 @@ function endGame(){
   },state.correct/TOTAL>=0.8?2200:600);
 }
 
-function playAgain(){
-  const sc=document.getElementById('summaryCanvas');
-  if(sc&&sc._animId){ cancelAnimationFrame(sc._animId); sc._animId=null; }
-  resetBossStyling();
-  Object.assign(state,{qIdx:0,score:0,correct:0,wrong:0,streak:0,bestStreak:0,active:true,bossMode:false,klasse:state.klasse,diff:state.diff});
-  resetUsedQ();
-  show('gameScreen');
-  setTimeout(()=>Battle.init(),50);
-  loadQ();
+async function submitHighscore(){
+  var nameEl=document.getElementById('hsNameInput');
+  var fb=document.getElementById('hsSubmitFb');
+  var name=(nameEl.value||'').trim().toUpperCase().slice(0,12);
+  if(!name){ fb.style.color='#FF4400'; fb.textContent='NAME EINGEBEN!'; return; }
+  fb.style.color='#FFD700'; fb.textContent='⏳ SPEICHERE...';
+  nameEl.disabled=true;
+  document.querySelector('#hsSubmitBox button').disabled=true;
+  try{
+    await saveHighscore(
+      name, state.score, state.klasse, state.diff,
+      state.correct, state.bossMode?BOSS_ROUNDS:TOTAL, state.bossMode||false
+    );
+    fb.style.color='#00FF66';
+    fb.textContent='✓ EINGETRAGEN! DANKE '+name+'!';
+    nameEl.value='';
+  }catch(e){
+    fb.style.color='#FF4400';
+    fb.textContent='FEHLER — BITTE NOCHMAL';
+    nameEl.disabled=false;
+    document.querySelector('#hsSubmitBox button').disabled=false;
+  }
 }
+
+function resetHsSubmit(){
+  var fb=document.getElementById('hsSubmitFb');
+  var nameEl=document.getElementById('hsNameInput');
+  var btn=document.querySelector('#hsSubmitBox button');
+  if(fb) fb.textContent='';
+  if(nameEl){ nameEl.value=''; nameEl.disabled=false; }
+  if(btn) btn.disabled=false;
+}
+  resetHsSubmit();
+  const sc=document.getElementById('summaryCanvas');
 
 /* ══════════════════════════════════════
    HIGHSCORES (localStorage)
@@ -2536,11 +2575,6 @@ function endBoss(){
   clearInterval(state.timerInt);
   if(won){
     setBossWin(); checkShipUnlocks(); SFX.victory();
-    var ahnName=state.playerName||'HELD';
-    (async function(){
-      try{ await saveAhnentafelEntry(ahnName,state.score,state.correct,BOSS_ROUNDS); }
-      catch(e){ console.error('Ahnentafel:',e); }
-    })();
   } else { SFX.gameOver(); }
   addTotalScore(state.score);
   Battle.finish(state.correct);
@@ -2630,24 +2664,19 @@ function closeShipReq(){
 // AHNENTAFEL — Global via Supabase
 // ══════════════════════════════════════
 
-async function saveAhnentafelEntry(name, score, correct, rounds){
+async function saveHighscore(name, score, klasse, diff, correct, total, isBoss){
   var entry = {
-    name: name,
+    name: name.toUpperCase().slice(0,12),
     score: score,
+    klasse: klasse,
+    diff: diff,
     correct: correct,
-    rounds: rounds,
+    total: total,
+    is_boss: isBoss ? true : false,
     date: new Date().toLocaleDateString('de-DE')
   };
-  // Lokal als Backup
   try{
-    var local = JSON.parse(localStorage.getItem('mb_ahnentafel')||'[]');
-    local.unshift(entry);
-    if(local.length > 50) local = local.slice(0,50);
-    localStorage.setItem('mb_ahnentafel', JSON.stringify(local));
-  }catch(e){}
-  // Global via Supabase
-  try{
-    await fetch(SUPABASE_URL + '/rest/v1/ahnentafel', {
+    await fetch(SUPABASE_URL + '/rest/v1/highscores', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -2657,41 +2686,40 @@ async function saveAhnentafelEntry(name, score, correct, rounds){
       },
       body: JSON.stringify(entry)
     });
-  }catch(e){ console.log('Supabase save error:', e); }
+  }catch(e){ console.log('Highscore save error:', e); }
 }
 
 async function renderAhnentafel(){
   var el = document.getElementById('ahnentafelList');
   if(!el) return;
-  el.innerHTML = '<div class="ahnentafel-empty">⏳ LADE AHNENTAFEL...</div>';
+  el.innerHTML = '<div class="ahnentafel-empty">⏳ LADE HIGHSCORES...</div>';
 
   var list = [];
-  // Global laden
   try{
     var resp = await fetch(
-      SUPABASE_URL + '/rest/v1/ahnentafel?select=*&order=score.desc&limit=50',
+      SUPABASE_URL + '/rest/v1/highscores?select=*&order=score.desc&limit=100',
       { headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY } }
     );
     if(resp.ok) list = await resp.json();
-  }catch(e){
-    // Fallback: lokal
-    try{ list = JSON.parse(localStorage.getItem('mb_ahnentafel')||'[]'); }catch(e2){}
-  }
+  }catch(e){ console.log('Highscore load error:', e); }
 
   el.innerHTML = '';
   if(!list || list.length === 0){
-    el.innerHTML = '<div class="ahnentafel-empty">NOCH KEIN HELD\nHAT DEN ENDBOSS\nBESIEGT...\n\nBIST DU BEREIT?</div>';
+    el.innerHTML = '<div class="ahnentafel-empty">NOCH KEINE SCORES!\n\nSEI DER ERSTE!</div>';
     return;
   }
   list.forEach(function(entry, i){
     var div = document.createElement('div');
     div.className = 'ahnentafel-entry';
-    var medal = i===0?'🥇':i===1?'🥈':i===2?'🥉':'⚔';
+    var medal = i===0?'🥇':i===1?'🥈':i===2?'🥉':'#'+(i+1);
+    var diffLabel = entry.diff==='easy'?'LEICHT':entry.diff==='medium'?'MITTEL':'SCHWER';
+    var klassLabel = 'KL.'+entry.klasse;
+    var bossTag = entry.is_boss ? ' ⚔' : '';
     div.innerHTML =
-      '<div class="ahnentafel-rank">'+medal+'</div>'+
+      '<div class="ahnentafel-rank" style="font-size:'+(i<3?'18px':'9px')+';min-width:36px;">'+medal+'</div>'+
       '<div class="ahnentafel-info">'+
-        '<div class="ahnentafel-name">'+entry.name+'</div>'+
-        '<div class="ahnentafel-detail">'+entry.correct+'/'+entry.rounds+' TREFFER · '+entry.date+'</div>'+
+        '<div class="ahnentafel-name">'+entry.name+bossTag+'</div>'+
+        '<div class="ahnentafel-detail">'+klassLabel+' · '+diffLabel+' · '+entry.correct+'/'+entry.total+' · '+entry.date+'</div>'+
       '</div>'+
       '<div class="ahnentafel-score">'+entry.score+' PK</div>';
     el.appendChild(div);
