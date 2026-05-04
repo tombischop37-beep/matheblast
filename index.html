@@ -1989,22 +1989,10 @@ function makeWrong(correct,klasse,diff){
    GAME FLOW
 ══════════════════════════════════════ */
 function startGame(){
-  // Check if combination is allowed
   if(!isUnlocked() && !(state.klasse===2 && state.diff==='easy')){
     showPaywall(); return;
   }
-  var nameVal = document.getElementById('nameInput').value;
-  var nameCheck = validateName(nameVal);
-  if(!nameCheck.ok){
-    var ni = document.getElementById('nameInput');
-    ni.style.borderColor='var(--red)';
-    ni.placeholder=nameCheck.msg;
-    ni.value='';
-    setTimeout(function(){ ni.style.borderColor=''; ni.placeholder='SPIELER 1'; }, 2000);
-    return;
-  }
-  const nm = nameCheck.name;
-  state.playerName=nm;
+  state.playerName='HELD';
   Object.assign(state,{qIdx:0,score:0,correct:0,wrong:0,streak:0,bestStreak:0,active:true});
   resetUsedQ();
   document.getElementById('qBadge').textContent=`${state.klasse}. KLASSE · ${diffLabel()}`;
@@ -2534,9 +2522,7 @@ function handleBoss(){
 function startBoss(){
   var el=document.getElementById('bossIntroModal');
   if(el) el.style.display='none';
-  var nameVal=document.getElementById('nameInput').value;
-  var nameCheck=validateName(nameVal);
-  state.playerName=nameCheck.ok?nameCheck.name:'HELD';
+  state.playerName='HELD';
   Object.assign(state,{
     qIdx:0,score:0,correct:0,wrong:0,streak:0,bestStreak:0,
     active:true,bossMode:true,bossHP:10,bossMaxHP:10,bossMistakes:0,
