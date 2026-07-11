@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="MatheBlast">
@@ -61,7 +61,7 @@ body::after{
   transform:translate(-50%,-50%);
   z-index:10;
   width:100%;max-width:430px;
-  height:100vh;max-height:860px;
+  height:100vh;height:100dvh;max-height:860px;
   display:flex;flex-direction:column;
   overflow:hidden;
 }
@@ -80,7 +80,12 @@ body::after{
 /* ══════════════════════════════════════
    SCREENS
 ══════════════════════════════════════ */
-.screen{display:none;flex-direction:column;height:100%;padding:16px;overflow-y:auto;animation:fadeSlide .35s ease;}
+.screen{display:none;flex-direction:column;height:100%;padding:16px;
+  padding-top:calc(16px + env(safe-area-inset-top));
+  padding-bottom:calc(16px + env(safe-area-inset-bottom));
+  padding-left:calc(16px + env(safe-area-inset-left));
+  padding-right:calc(16px + env(safe-area-inset-right));
+  overflow-y:auto;animation:fadeSlide .35s ease;}
 .screen.active{display:flex}
 @keyframes fadeSlide{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
 
@@ -200,7 +205,12 @@ body::after{
 /* ══════════════════════════════════════
    SCREEN: GAME
 ══════════════════════════════════════ */
-#gameScreen{padding:12px;gap:10px}
+#gameScreen{padding:12px;
+  padding-top:calc(12px + env(safe-area-inset-top));
+  padding-bottom:calc(12px + env(safe-area-inset-bottom));
+  padding-left:calc(12px + env(safe-area-inset-left));
+  padding-right:calc(12px + env(safe-area-inset-right));
+  gap:10px}
 
 /* Game header */
 .game-hdr{
