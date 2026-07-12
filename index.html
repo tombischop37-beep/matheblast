@@ -2709,25 +2709,35 @@ function closeShipReq(){
 // ══════════════════════════════════════
 
 async function saveHighscore(name, score, klasse, diff, correct, total, isBoss){
+  // Feldnamen müssen zu den Spalten der Supabase-Tabelle UND zur Anzeige
+  // (renderAhnentafel) passen: name, score, klasse, diff, correct, total, is_boss, date.
   var entry = {
     name: name.toUpperCase().slice(0,12),
     score: score,
+    klasse: klasse,
+    diff: diff,
     correct: correct,
-    rounds: total || 15,
+    total: total || 15,
+    is_boss: !!isBoss,
     date: new Date().toLocaleDateString('de-DE')
   };
-  try{
-    await fetch(SUPABASE_URL + '/rest/v1/ahnentafel', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'apikey': SUPABASE_KEY,
-        'Authorization': 'Bearer ' + SUPABASE_KEY,
-        'Prefer': 'return=minimal'
-      },
-      body: JSON.stringify(entry)
-    });
-  }catch(e){ console.log('Highscore save error:', e); }
+  // Kein internes try/catch: Fehler sollen an submitHighscore durchschlagen,
+  // damit der Nutzer echtes Feedback bekommt statt fälschlich "✓ EINGETRAGEN".
+  var resp = await fetch(SUPABASE_URL + '/rest/v1/ahnentafel', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'apikey': SUPABASE_KEY,
+      'Authorization': 'Bearer ' + SUPABASE_KEY,
+      'Prefer': 'return=minimal'
+    },
+    body: JSON.stringify(entry)
+  });
+  if(!resp.ok){
+    var t=''; try{ t=await resp.text(); }catch(e){}
+    console.log('Highscore save failed:', resp.status, t);
+    throw new Error('save failed ' + resp.status);
+  }
 }
 
 async function renderAhnentafel(){
@@ -2736,15 +2746,22 @@ async function renderAhnentafel(){
   el.innerHTML = '<div class="ahnentafel-empty">⏳ LADE HIGHSCORES...</div>';
 
   var list = [];
+  var loadError = null;
   try{
     var resp = await fetch(
       SUPABASE_URL + '/rest/v1/ahnentafel?select=*&order=score.desc&limit=50',
       { headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY } }
     );
-    if(resp.ok) list = await resp.json();
-  }catch(e){ console.log('Highscore load error:', e); }
+    if(resp.ok){ list = await resp.json(); }
+    else { loadError = 'HTTP ' + resp.status; console.log('Highscore load HTTP', resp.status); }
+  }catch(e){ loadError = 'NETZWERK'; console.log('Highscore load error:', e); }
 
   el.innerHTML = '';
+  // Fehler (Server nicht erreichbar / pausiert / Rechte) klar von "wirklich leer" trennen
+  if(loadError){
+    el.innerHTML = '<div class="ahnentafel-empty">⚠ RANGLISTE NICHT ERREICHBAR\n('+loadError+')\n\nSPÄTER NOCHMAL VERSUCHEN</div>';
+    return;
+  }
   if(!list || list.length === 0){
     el.innerHTML = '<div class="ahnentafel-empty">NOCH KEINE SCORES!\n\nSEI DER ERSTE!</div>';
     return;
@@ -2753,14 +2770,16 @@ async function renderAhnentafel(){
     var div = document.createElement('div');
     div.className = 'ahnentafel-entry';
     var medal = i===0?'🥇':i===1?'🥈':i===2?'🥉':'#'+(i+1);
-    var diffLabel = entry.diff==='easy'?'LEICHT':entry.diff==='medium'?'MITTEL':'SCHWER';
-    var klassLabel = 'KL.'+entry.klasse;
+    var diffLabel = entry.diff==='easy'?'LEICHT':entry.diff==='medium'?'MITTEL':entry.diff==='hard'?'SCHWER':'';
+    var klassLabel = (entry.klasse!=null && entry.klasse!=='') ? 'KL.'+entry.klasse : '';
+    var scoreLabel = (entry.correct!=null && entry.total!=null) ? entry.correct+'/'+entry.total : '';
     var bossTag = entry.is_boss ? ' ⚔' : '';
+    var detail = [klassLabel, diffLabel, scoreLabel, entry.date].filter(function(x){return x;}).join(' · ');
     div.innerHTML =
       '<div class="ahnentafel-rank" style="font-size:'+(i<3?'18px':'9px')+';min-width:36px;">'+medal+'</div>'+
       '<div class="ahnentafel-info">'+
         '<div class="ahnentafel-name">'+entry.name+bossTag+'</div>'+
-        '<div class="ahnentafel-detail">'+klassLabel+' · '+diffLabel+' · '+entry.correct+'/'+entry.total+' · '+entry.date+'</div>'+
+        '<div class="ahnentafel-detail">'+detail+'</div>'+
       '</div>'+
       '<div class="ahnentafel-score">'+entry.score+' PK</div>';
     el.appendChild(div);
