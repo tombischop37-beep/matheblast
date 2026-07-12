@@ -1,0 +1,20 @@
+name: Supabase Keep-Alive
+
+on:
+  schedule:
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Supabase REST API
+        run: |
+          KEY="eyJhbGci••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••"
+          URL="https://rbgscwpdjhqvqwwtsxvz.supabase.co/rest/v1/ahnentafel?select=*&limit=1"
+          code=$(curl -s -o /dev/null -w "%{http_code}" "$URL" -H "apikey: $KEY" -H "Authorization: Bearer $KEY")
+          echo "Supabase antwortete HTTP $code"
+          if [ "$code" != "200" ]; then
+            echo "::warning::Unerwarteter Status $code"
+          fi
