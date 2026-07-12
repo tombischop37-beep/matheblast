@@ -1571,6 +1571,34 @@ const UNLOCK_PRICE = '2,00 €';
 const UNLOCK_KEY='matheblast_k4_unlocked';
 
 // ══════════════════════════════════════
+// APP-KONTEXT  (bezahlte Play-Store-App / TWA)
+// ══════════════════════════════════════
+// Läuft die Seite in der bezahlten Android-App, wird alles automatisch
+// freigeschaltet – der Nutzer hat ja für den Download bezahlt. Google kassiert
+// den Kaufpreis selbst → kein Google-Play-Billing nötig, kein Stripe in der App.
+// Erkennung: Beim Start einer TWA setzt Chrome document.referrer auf
+// "android-app://<paketname>". Das Spiel ist Single-Page (keine echten
+// Seitenwechsel), daher bleibt der Wert für die ganze Sitzung gültig und eine
+// einmalige Prüfung beim Laden genügt.
+const APP_PACKAGE = 'de.mathe_blast.www.twa';
+const IS_APP = (function(){
+  try{
+    var ref = document.referrer || '';
+    return ref.indexOf('android-app://') === 0 && ref.indexOf(APP_PACKAGE) !== -1;
+  }catch(e){ return false; }
+})();
+
+// ══════════════════════════════════════
+// MONETARISIERUNG
+// ══════════════════════════════════════
+// FREE_WEB = true  → Website ist komplett kostenlos (Gratis-Demo/Trichter für die
+//                    bezahlte App). Kein Paywall, kein Stripe. Umsatz nur über die
+//                    bezahlte Play-Store-App (Einmalkauf).
+// FREE_WEB = false → zurück zu Freemium (Klasse 2 Leicht gratis, Rest 2 € via Stripe).
+// Ein Schalter, alles andere hängt daran.
+const FREE_WEB = true;
+
+// ══════════════════════════════════════
 // SCHIFF-SYSTEM
 // ══════════════════════════════════════
 const SHIPS = [
@@ -1685,6 +1713,7 @@ function savePerfectCount(klasse, diff){
 
 
 function isUnlocked(){
+  if(IS_APP || FREE_WEB) return true;  // Bezahlte App oder Gratis-Web → alles frei
   try{return localStorage.getItem(UNLOCK_KEY)==='1'}catch(e){return false}
 }
 
@@ -1764,6 +1793,7 @@ function handleClass4(){
 }
 
 function showPaywall(){
+  if(IS_APP || FREE_WEB){ show('homeScreen'); return; }   // App oder Gratis-Web: keine Paywall
   document.getElementById('codeInput').value='';
   document.getElementById('codeFeedback').textContent='';
   document.getElementById('stripeError').textContent='';
@@ -2394,39 +2424,62 @@ if('serviceWorker' in navigator){
 }
 
 // Stripe Payment Link Rückkehr erkennen
+// ── BYPASS-SCHUTZ ──
+// Früher genügte ?payment=success zum Freischalten – das konnte jeder aufrufen.
+// Jetzt muss zusätzlich ein echt aussehender Stripe-Checkout-Nachweis mitkommen
+// (session_id = cs_live_… bzw. cs_test_…). Stripe hängt diesen Parameter nur an,
+// wenn im Dashboard die Redirect-URL nach der Zahlung so gesetzt ist:
+//   https://www.mathe-blast.de/?payment=success&session_id={CHECKOUT_SESSION_ID}
+// Hinweis: Ohne eigenes Backend ist keine 100%ige Prüfung möglich – der triviale
+// "einfach die URL aufrufen"-Bypass ist damit aber weg.
 (function checkPaymentReturn(){
   const params = new URLSearchParams(window.location.search);
-  if(params.get('payment') === 'success'){
-    function doPaymentSuccess(){
-      console.log('MatheBlast: payment success detected');
-      // Prüfen ob bereits verarbeitet (verhindert Doppel-Anzeige bei Reload)
-      var alreadyShown = false;
-      try{ alreadyShown = localStorage.getItem('mb_payment_shown') === '1'; }catch(e){}
-      try { unlockSilent(); } catch(e){}
-      try { show('homeScreen'); } catch(e){}
-      // Modal nur zeigen wenn noch nicht gezeigt
-      if(!alreadyShown){
-        try{ localStorage.setItem('mb_payment_shown','1'); }catch(e){}
-        try { showCodeModal(); }
-        catch(e){
-          console.error('showCodeModal error:', e);
-          var codes = _getCodeList();
-          var code = codes[Math.floor(Math.random()*codes.length)];
-          try{ localStorage.setItem('matheblast_k4_code', code); }catch(ex){}
-          alert('DEIN CODE: ' + code + '\n\nBitte notieren oder Screenshot machen!');
-        }
+  if(params.get('payment') !== 'success') return;
+
+  var sid = params.get('session_id') || '';
+  var validPayment = /^cs_(live|test)_[A-Za-z0-9]{20,}$/.test(sid);
+
+  function doPaymentSuccess(){
+    console.log('MatheBlast: payment success detected');
+    // Prüfen ob bereits verarbeitet (verhindert Doppel-Anzeige bei Reload)
+    var alreadyShown = false;
+    try{ alreadyShown = localStorage.getItem('mb_payment_shown') === '1'; }catch(e){}
+    try { unlockSilent(); } catch(e){}
+    try { show('homeScreen'); } catch(e){}
+    // Modal nur zeigen wenn noch nicht gezeigt
+    if(!alreadyShown){
+      try{ localStorage.setItem('mb_payment_shown','1'); }catch(e){}
+      try { showCodeModal(); }
+      catch(e){
+        console.error('showCodeModal error:', e);
+        var codes = _getCodeList();
+        var code = codes[Math.floor(Math.random()*codes.length)];
+        try{ localStorage.setItem('matheblast_k4_code', code); }catch(ex){}
+        alert('DEIN CODE: ' + code + '\n\nBitte notieren oder Screenshot machen!');
       }
-      setTimeout(function(){
-        window.history.replaceState({}, '', window.location.pathname);
-      }, 5000);
     }
-    if(document.readyState === 'complete'){
-      setTimeout(doPaymentSuccess, 1200);
-    } else {
-      window.addEventListener('load', function(){
-        setTimeout(doPaymentSuccess, 1200);
-      });
+    setTimeout(function(){
+      window.history.replaceState({}, '', window.location.pathname);
+    }, 5000);
+  }
+
+  function rejectPayment(){
+    // Kein gültiger Stripe-Nachweis → nicht freischalten (Bypass-Schutz).
+    console.warn('MatheBlast: payment=success ohne gültige session_id – ignoriert');
+    try{ window.history.replaceState({}, '', window.location.pathname); }catch(e){}
+    try{ show('payScreen'); }catch(e){}
+    var err=document.getElementById('stripeError');
+    if(err){
+      err.innerHTML='Zahlung konnte nicht bestätigt werden.<br>'+
+        '<span style="font-size:12px;opacity:.6">Falls du bezahlt hast, gib bitte deinen Freischalt-Code ein.</span>';
     }
+  }
+
+  var handler = validPayment ? doPaymentSuccess : rejectPayment;
+  if(document.readyState === 'complete'){
+    setTimeout(handler, 1200);
+  } else {
+    window.addEventListener('load', function(){ setTimeout(handler, 1200); });
   }
 })();
 
