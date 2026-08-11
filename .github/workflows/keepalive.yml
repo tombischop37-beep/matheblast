@@ -13,7 +13,7 @@ jobs:
         run: |
           KEY="eyJhbGci••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••"
           URL="https://rbgscwpdjhqvqwwtsxvz.supabase.co/rest/v1/ahnentafel?select=*&limit=1"
-          code=$(curl -s -o /dev/null -w "%{http_code}" "$URL" -H "apikey: $KEY" -H "Authorization: Bearer $KEY")
+          code=$(curl -s --retry 4 --retry-delay 5 --retry-all-errors --connect-timeout 10 --max-time 30 -o /dev/null -w "%{http_code}" "$URL" -H "apikey: $KEY" -H "Authorization: Bearer $KEY") || code="000"
           echo "Supabase antwortete HTTP $code"
           if [ "$code" != "200" ]; then
             echo "::warning::Unerwarteter Status $code"
